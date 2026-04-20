@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户登录</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #40a9ff;
+        }
+        .switch-form {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        .remember-me {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .remember-me input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+        .remember-me label {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loginForm">
+            <h2>登录</h2>
+            <div class="form-group">
+                <input type="text" id="loginUsername" placeholder="用户名">
+            </div>
+            <div class="form-group">
+                <input type="password" id="loginPassword" placeholder="密码">
+            </div>
+            <div class="remember-me">
+                <input type="checkbox" id="rememberMe" checked>
+                <label for="rememberMe">记住登录状态7天</label>
+            </div>
+            <button onclick="login()">登录</button>
+            <div class="switch-form">
+                <a href="/register.html">没有账号？立即注册</a>
+            </div>
+            <div id="loginError" class="error-message"></div>
+        </div>
+    </div>
+
+    <script>
+
+        // 检查是否已登录
+        function checkLoginStatus() {
+            const token = localStorage.getItem('token');
+            const expiry = localStorage.getItem('tokenExpiry');
+            
+            if (token && expiry) {
+                // 如果token未过期，直接跳转到首页
+                if (new Date().getTime() < parseInt(expiry)) {
+                    window.location.href = '/';
+                    return;
+                }
+            }
+        }
+
+        // 设置token和过期时间
+        function setTokenWithExpiry(token, username) {
+            const expiry = new Date().getTime() + (7 * 24 * 60 * 60 * 1000); // 7天
+            localStorage.setItem('token', token);
+            localStorage.setItem('username', username);
+            localStorage.setItem('tokenExpiry', expiry.toString());
+        }
+
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+            const errorElement = document.getElementById('loginError');
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    if (rememberMe) {
+                        // 设置token和过期时间
+                        setTokenWithExpiry(data.token, username);
+                    } else {
+                        // 仅在当前会话中保存
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('username', username);
+                    }
+                    window.location.href = '/';
+                } else {
+                    errorElement.style.display = 'block';
+                    errorElement.textContent = data.message || '登录失败';
+                }
+            } catch (error) {
+                errorElement.style.display = 'block';
+                errorElement.textContent = '服务器错误，请稍后重试';
+            }
+        }
+
+
+        // 页面加载时检查登录状态
+        window.onload = checkLoginStatus;
+    </script>
+</body>
+</html>

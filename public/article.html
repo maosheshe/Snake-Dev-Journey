@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章详情 - 蛇蛇的开发之旅</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 1rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1rem;
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #1890ff;
+            text-decoration: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            background-color: #1890ff;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+
+        .back-btn:hover {
+            background-color: #40a9ff;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 0.5rem;
+            }
+
+            .nav {
+                padding: 0 0.5rem;
+            }
+
+            .logo {
+                font-size: 1rem;
+                max-width: 150px;
+            }
+
+            .back-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo {
+                max-width: 120px;
+            }
+
+            .back-btn {
+                padding: 4px 8px;
+            }
+        }
+
+        .main-content {
+            max-width: 1000px;
+            margin: 80px auto 40px;
+            display: flex;
+            gap: 2rem;
+            padding: 0 1rem;
+            box-sizing: border-box;
+        }
+
+        .article-sidebar {
+            width: 240px;
+            height: calc(100vh - 100px);
+            position: sticky;
+            top: 80px;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            display: block;
+            box-sizing: border-box;
+        }
+
+        .toc {
+            position: relative;
+            top: 0;
+        }
+
+        .toc-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2329;
+            margin-bottom: 1rem;
+            padding-left: 0.5rem;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .toc-item {
+            margin-bottom: 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .toc-link {
+            color: #4e5969;
+            text-decoration: none;
+            display: block;
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+            line-height: 1.4;
+        }
+
+        .toc-link:hover {
+            color: #1890ff;
+            background-color: #f5f6f7;
+        }
+
+        .toc-link.active {
+            color: #1890ff;
+            background-color: #e6f4ff;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .article-sidebar {
+                display: none;
+            }
+            
+            .article-main {
+                padding: 1.5rem;
+            }
+        }
+
+        .article-main {
+            flex: 1;
+            background: white;
+            padding: 2rem 3rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            min-height: calc(100vh - 160px);
+            box-sizing: border-box;
+            overflow-x: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .article-main.full-width {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .article-sidebar.hidden {
+            display: none;
+        }
+
+        .article-title {
+            font-size: 2.4rem;
+            font-weight: 600;
+            color: #1f2329;
+            margin-bottom: 1.5rem;
+            line-height: 1.3;
+        }
+
+        .article-meta {
+            color: #86909c;
+            font-size: 0.9rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e5e6eb;
+            margin-bottom: 2rem;
+        }
+
+        .article-content {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #1f2329;
+            max-width: 100%;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .article-content p {
+            margin-bottom: 1.2em;
+            max-width: 100%;
+            overflow-wrap: break-word;
+        }
+
+        .article-content h1, 
+        .article-content h2, 
+        .article-content h3 {
+            margin-top: 2em;
+            margin-bottom: 1em;
+            font-weight: 600;
+        }
+
+        .article-content h1 { font-size: 1.8em; }
+        .article-content h2 { font-size: 1.5em; }
+        .article-content h3 { font-size: 1.2em; }
+
+        .article-content pre {
+            background: #f5f6f7;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .article-content code {
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            background: #f5f6f7;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .article-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .article-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1rem 0;
+            overflow-x: auto;
+            display: block;
+        }
+        .article-content th, 
+        .article-content td {
+            border: 1px solid #dfe2e5;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .article-content th {
+            background-color: #f6f8fa;
+            font-weight: 600;
+        }
+        .article-content tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .article-content tr:hover {
+            background-color: #f2f2f2;
+        }
+
+        .toc {
+            position: sticky;
+            top: 0;
+        }
+
+        .toc-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2329;
+            margin-bottom: 1rem;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .toc-item {
+            margin-bottom: 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .toc-link {
+            color: #4e5969;
+            text-decoration: none;
+            display: block;
+            padding: 0.3rem 0;
+            transition: color 0.2s;
+        }
+
+        .toc-link:hover {
+            color: #1890ff;
+        }
+
+        .toc-link.active {
+            color: #1890ff;
+            font-weight: 500;
+        }
+
+        /* 代码块样式 */
+        .code-block {
+            position: relative;
+            background-color: #f6f8fa;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .code-block pre {
+            margin: 0;
+            padding-right: 40px;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            display: block;
+        }
+
+        /* 复制按钮样式 */
+        .copy-button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 4px 8px;
+            font-size: 12px;
+            color: #666;
+            background-color: #fff;
+            border: 1px solid #d1d5da;
+            border-radius: 4px;
+            cursor: pointer;
+            display: block;
+            transition: all 0.2s;
+        }
+
+        .copy-button:hover {
+            background-color: #f3f4f6;
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+
+        .copy-button.copied {
+            color: #28a745;
+            border-color: #28a745;
+        }
+
+        /* 语言标签样式 */
+        .code-lang {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            font-size: 12px;
+            color: #666;
+            background-color: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            border: 1px solid #d1d5da;
+        }
+
+        /* 页脚样式 */
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            background-color: #fff;
+            margin-top: 2rem;
+            box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
+        }
+
+        .footer .copyright {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer .icp {
+            font-size: 0.8rem;
+        }
+
+        .footer .icp a {
+            color: #666;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer .icp a:hover {
+            color: #1890ff;
+        }
+
+        /* 错误提示样式 */
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+
+        .retry-button {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .retry-button:hover {
+            background-color: #40a9ff;
+        }
+
+        .retry-button:disabled {
+            background-color: #d9d9d9;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .article-sidebar {
+                display: none;
+            }
+            
+            .article-main {
+                padding: 1.5rem;
+                width: 100%;
+            }
+
+            .article-title {
+                font-size: 1.8rem;
+            }
+
+            .article-content {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .article-main {
+                padding: 1rem;
+            }
+
+            .article-title {
+                font-size: 1.5rem;
+            }
+
+            .article-content {
+                font-size: 0.95rem;
+            }
+
+            .article-content pre {
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="/" class="logo" title="蛇蛇的开发之旅">蛇蛇的开发之旅</a>
+            <a href="javascript:void(0)" class="back-btn" onclick="goBack()">返回</a>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        <aside class="article-sidebar">
+            <div class="toc">
+                <h3 class="toc-title">目录</h3>
+                <ul class="toc-list" id="tocList">
+                    <!-- 目录将通过 JavaScript 动态生成 -->
+                </ul>
+            </div>
+        </aside>
+        <div class="article-main">
+            <article>
+                <header class="article-header">
+                    <h1 class="article-title" id="articleTitle">加载中...</h1>
+                    <div class="article-meta" id="articleMeta"></div>
+                    <div id="articleTags" style="margin-bottom: 2rem;"></div>
+                </header>
+                <div class="article-content" id="articleContent">
+                    加载中...
+                </div>
+                <div class="article-actions" style="margin-top: 3rem; text-align: center; border-top: 1px solid #eee; padding-top: 2rem;">
+                    <button id="likeBtn" onclick="handleLike()" style="padding: 12px 30px; background: #fff; border: 2px solid #ff4d4f; color: #ff4d4f; border-radius: 30px; cursor: pointer; font-size: 16px; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px;">
+                        <span id="likeIcon">❤</span>
+                        <span id="likeLabel">点赞</span>
+                        <span id="likeCount">0</span>
+                    </button>
+                </div>
+            </article>
+        </div>
+    </main>
+
+    <footer class="footer" style="padding: 0.25rem 0; background-color: #f9f9f9; position: fixed; bottom: 0; left: 0; width: 100%;">
+        <div style="display: flex; justify-content: center; align-items: center; gap: 0.75rem; font-size: 0.8rem;">
+            <span>Copyright © 2025 毛蛇蛇 All Rights Reserved</span>
+            <a href="https://beian.miit.gov.cn/" target="_blank">粤ICP备2025400537号-1</a>
+            <a href="https://beian.mps.gov.cn/#/query/webSearch?code=44195002000123" target="_blank" style="display: flex; align-items: center;">
+                <img src="https://beian.mps.gov.cn/img/logo01.dd7ff50e.png" alt="公安备案" style="width: 14px; height: 14px; margin-right: 3px;" />
+                粤公网安备44195002000123号
+            </a>
+        </div>
+    </footer>
+
+    <script src="/js/marked.min.js"></script>
+    <script src="/js/highlight.min.js"></script>
+    <link rel="stylesheet" href="/js/github.min.css">
+    <script>
+        // 返回按钮功能
+        function goBack() {
+            // 检测是否为移动设备
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+                // 在移动设备上返回上一页
+                window.history.back();
+            } else {
+                // 在桌面设备上关闭当前标签页
+                window.close();
+            }
+        }
+
+        // 等待 marked 库加载完成
+        let marked = window.marked;
+        let retryCount = 0;
+        const MAX_RETRIES = 3;
+        const RETRY_DELAY = 5000; // 5秒后重试
+
+        // 复制代码功能
+        async function copyCode(button) {
+            const codeBlock = button.parentElement;
+            const code = codeBlock.querySelector('code').textContent;
+            try {
+                await navigator.clipboard.writeText(code);
+                button.textContent = '已复制！';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = '复制代码';
+                    button.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                console.error('复制失败:', err);
+                button.textContent = '复制失败';
+                setTimeout(() => {
+                    button.textContent = '复制代码';
+                }, 2000);
+            }
+        }
+
+        function showError(message, showRetry = true) {
+            const contentElement = document.getElementById('articleContent');
+            const titleElement = document.getElementById('articleTitle');
+            const metaElement = document.getElementById('articleMeta');
+            
+            titleElement.textContent = '文章加载失败';
+            contentElement.innerHTML = `
+                <div class="error-message">
+                    <p>抱歉，${message}</p>
+                    ${showRetry ? `
+                        <button class="retry-button" onclick="retryLoadArticle()" id="retryButton">
+                            重试 (${MAX_RETRIES - retryCount}次机会)
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+            metaElement.textContent = '';
+        }
+
+        function retryLoadArticle() {
+            const retryButton = document.getElementById('retryButton');
+            if (retryButton) {
+                retryButton.disabled = true;
+                retryButton.textContent = `请等待 ${RETRY_DELAY/1000} 秒后重试...`;
+            }
+            
+            setTimeout(() => {
+                retryCount++;
+                loadArticle();
+            }, RETRY_DELAY);
+        }
+
+        async function loadArticle() {
+            const loadingText = '加载中...';
+            const contentElement = document.getElementById('articleContent');
+            const titleElement = document.getElementById('articleTitle');
+            const metaElement = document.getElementById('articleMeta');
+            
+            titleElement.textContent = loadingText;
+            contentElement.textContent = loadingText;
+            metaElement.textContent = '';
+
+            try {
+                if (!marked) {
+                    throw new Error('Marked 库未加载完成');
+                }
+
+                // 配置 marked.js
+                const renderer = new marked.Renderer();
+                
+                // 自定义代码块渲染
+                renderer.code = function(code, language) {
+                    const escapedCode = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    return `
+                        <div class="code-block">
+                            <span class="code-lang">${language || 'text'}</span>
+                            <button class="copy-button" onclick="copyCode(this)">复制代码</button>
+                            <pre><code class="language-${language || 'text'}">${escapedCode}</code></pre>
+                        </div>
+                    `;
+                };
+
+                // 配置 marked 选项
+                marked.setOptions({
+                    renderer: renderer,
+                    highlight: function(code, lang) {
+                        return code;
+                    },
+                    langPrefix: 'language-',
+                    breaks: true,
+                    gfm: true
+                });
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const articleId = urlParams.get('id');
+
+                if (!articleId) {
+                    throw new Error('未找到文章ID');
+                }
+
+                try {
+                    const response = await fetch(`/api/articles/${articleId}`);
+                    
+                    if (response.status === 429) {
+                        throw new Error('请求过于频繁，请稍后再试');
+                    }
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP错误: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    if (!data.data?.article) {
+                        throw new Error('文章不存在');
+                    }
+
+                    const article = data.data.article;
+                    const mode = article.displayMode || 'markdown';
+                    
+                    document.title = `${article.title} - 蛇蛇的开发之旅`;
+                    titleElement.textContent = article.title;
+                    
+                    // 构建元数据
+                    const metaHtml = `
+                        作者: ${article.user?.username || '未知'} | 
+                        发布时间: ${new Date(article.createdAt).toLocaleString()} | 
+                        分类: ${article.category || '未分类'} | 
+                        阅读量: ${article.views || 0}
+                    `;
+                    metaElement.innerHTML = metaHtml;
+                    
+                    // 显示标签
+                    const tagsContainer = document.getElementById('articleTags');
+                    if (article.tags) {
+                        tagsContainer.innerHTML = article.tags.split(',').map(tag => 
+                            `<span style="background: #e6f7ff; color: #1890ff; padding: 4px 12px; border-radius: 4px; margin-right: 10px; font-size: 13px;">${tag.trim()}</span>`
+                        ).join('');
+                    } else {
+                        tagsContainer.innerHTML = '';
+                    }
+
+                    // 设置点赞数
+                    document.getElementById('likeCount').textContent = article.likes || 0;
+                    
+                    // 根据模式渲染正文
+                    if (mode === 'markdown') {
+                        contentElement.innerHTML = marked.parse(article.content || '');
+                        if (window.hljs) {
+                            document.querySelectorAll('pre code').forEach((block) => {
+                                hljs.highlightBlock(block);
+                            });
+                        }
+                    } else if (mode === 'inject') {
+                        try {
+                            const res = await fetch('/uploads/' + article.content);
+                            if (!res.ok) throw new Error('无法加载 HTML 文件');
+                            const html = await res.text();
+                            const doc = new DOMParser().parseFromString(html, 'text/html');
+                            
+                            // 提取 style 和 body 内容
+                            const styles = Array.from(doc.querySelectorAll('style')).map(s => s.outerHTML).join('');
+                            const bodyContent = doc.body.innerHTML;
+                            
+                            // 为了防止样式污染，暂时直接注入（用户要求保留style）
+                            contentElement.innerHTML = `<div class="injected-content">${styles}${bodyContent}</div>`;
+                        } catch (err) {
+                            contentElement.innerHTML = `<div class="error-message">HTML 内容加载失败: ${err.message}</div>`;
+                        }
+                    } else if (mode === 'iframe') {
+                        contentElement.innerHTML = `
+                            <iframe id="articleIframe" src="/uploads/${article.content}" 
+                                style="width: 100%; border: none; min-height: 600px;" 
+                                allowfullscreen>
+                            </iframe>
+                        `;
+                        // 尝试自动调整高度
+                        const iframe = document.getElementById('articleIframe');
+                        iframe.onload = function() {
+                            try {
+                                const height = iframe.contentWindow.document.body.scrollHeight;
+                                iframe.style.height = height + 'px';
+                            } catch (e) {
+                                console.log('无法跨域调整 IFrame 高度');
+                            }
+                        };
+                    }
+                    
+                    generateTOC();
+
+                    // 重置重试计数
+                    retryCount = 0;
+
+                } catch (fetchError) {
+                    // 处理网络错误
+                    if (fetchError.name === 'TypeError' && fetchError.message.includes('Failed to fetch')) {
+                        throw new Error('网络连接失败，请检查网络设置');
+                    }
+                    throw fetchError;
+                }
+
+            } catch (error) {
+                console.error('加载文章失败:', error);
+                
+                let errorMessage = error.message;
+                let shouldRetry = false;
+
+                if (error.message.includes('请求过于频繁')) {
+                    errorMessage = '服务器请求次数过多，请稍后再试';
+                    shouldRetry = retryCount < MAX_RETRIES;
+                } else if (error.message.includes('网络连接失败')) {
+                    errorMessage = '网络连接失败，请检查网络设置后重试';
+                    shouldRetry = retryCount < MAX_RETRIES;
+                } else if (error.message.includes('HTTP错误')) {
+                    errorMessage = '服务器暂时无法响应，请稍后再试';
+                    shouldRetry = retryCount < MAX_RETRIES;
+                }
+
+                showError(errorMessage, shouldRetry);
+            }
+        }
+
+        function generateTOC() {
+            const tocList = document.getElementById('tocList');
+            const sidebar = document.querySelector('.article-sidebar');
+            const mainContent = document.querySelector('.article-main');
+            const headings = document.querySelectorAll('.article-content h1, .article-content h2, .article-content h3');
+            
+            tocList.innerHTML = '';
+            
+            if (headings.length === 0) {
+                // 如果没有标题（如游戏或HTML注入模式），隐藏侧边栏并使内容扩宽
+                if (sidebar) sidebar.classList.add('hidden');
+                if (mainContent) mainContent.classList.add('full-width');
+                return;
+            }
+
+            // 恢复显示侧边栏
+            if (sidebar) sidebar.classList.remove('hidden');
+            if (mainContent) mainContent.classList.remove('full-width');
+
+            headings.forEach((heading, index) => {
+                const level = parseInt(heading.tagName.charAt(1));
+                const text = heading.textContent;
+                const id = `heading-${index}`;
+                heading.id = id;
+                
+                const li = document.createElement('li');
+                li.className = 'toc-item';
+                li.style.paddingLeft = `${(level - 1) * 1}rem`;
+                
+                const a = document.createElement('a');
+                a.href = `#${id}`;
+                a.className = 'toc-link';
+                a.textContent = text;
+                
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    heading.scrollIntoView({ behavior: 'smooth' });
+                });
+                
+                li.appendChild(a);
+                tocList.appendChild(li);
+            });
+        }
+
+        // 处理点赞
+        async function handleLike() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const articleId = urlParams.get('id');
+            const likeBtn = document.getElementById('likeBtn');
+            const likeLabel = document.getElementById('likeLabel');
+            const likeCount = document.getElementById('likeCount');
+
+            try {
+                const response = await fetch(`/api/articles/${articleId}/like`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.status) {
+                    likeCount.textContent = data.data.likes;
+                    likeBtn.style.background = '#ff4d4f';
+                    likeBtn.style.color = '#fff';
+                    likeLabel.textContent = '已点赞';
+                    likeBtn.disabled = true;
+                }
+            } catch (error) {
+                console.error('点赞失败:', error);
+            }
+        }
+
+        // 初始化
+        window.onload = () => {
+            loadArticle();
+        };
+    </script>
+</body>
+</html>

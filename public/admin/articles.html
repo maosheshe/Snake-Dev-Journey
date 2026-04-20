@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章列表</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .article-list {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .article-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .article-item:last-child {
+            border-bottom: none;
+        }
+        .article-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .article-meta {
+            color: #666;
+            font-size: 14px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background-color: #1890ff;
+            color: white;
+        }
+        .btn-danger {
+            background-color: #ff4d4f;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.8;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 10px;
+        }
+        .pagination button {
+            padding: 8px 16px;
+            border: 1px solid #1890ff;
+            background-color: white;
+            color: #1890ff;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .pagination button.active {
+            background-color: #1890ff;
+            color: white;
+        }
+        .pagination button:disabled {
+            border-color: #d9d9d9;
+            color: #d9d9d9;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>文章列表</h1>
+            <div>
+                <a href="/" class="btn btn-primary" style="margin-right: 10px;">返回主页</a>
+                <a href="create-article.html" class="btn btn-primary">新增文章</a>
+            </div>
+        </div>
+
+        <div class="article-list" id="articleList">
+            <!-- 文章列表将通过JavaScript动态加载 -->
+        </div>
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        const pageSize = 10;
+
+        // 加载文章列表
+        async function loadArticles(page = 1) {
+            try {
+                const response = await fetch(`/api/articles?page=${page}&pageSize=${pageSize}`);
+                const data = await response.json();
+                
+                const articleList = document.getElementById('articleList');
+                articleList.innerHTML = data.data.articles.map(article => `
+                    <div class="article-item">
+                        <div class="article-title">${article.title}</div>
+                        <div class="article-meta">
+                            作者: ${article.user?.username || '未知'} | 
+                            创建时间: ${new Date(article.createdAt).toLocaleString()}
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <a href="article-detail.html?id=${article.id}" class="btn btn-primary">查看</a>
+                            <button onclick="deleteArticle(${article.id})" class="btn btn-danger">删除</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // 渲染分页控件
+                renderPagination(data.data.pagination);
+            } catch (error) {
+                console.error('加载文章列表错误:', error);
+            }
+        }
+
+        // 渲染分页控件
+        function renderPagination(pagination) {
+            const { total, current, pageSize, totalPages } = pagination;
+            const paginationElement = document.getElementById('pagination');
+            
+            let paginationHtml = `
+                <button onclick="loadArticles(1)" ${current === 1 ? 'disabled' : ''}>首页</button>
+                <button onclick="loadArticles(${current - 1})" ${current === 1 ? 'disabled' : ''}>上一页</button>
+            `;
+
+            // 显示页码
+            for (let i = Math.max(1, current - 2); i <= Math.min(totalPages, current + 2); i++) {
+                paginationHtml += `
+                    <button onclick="loadArticles(${i})" class="${i === current ? 'active' : ''}">${i}</button>
+                `;
+            }
+
+            paginationHtml += `
+                <button onclick="loadArticles(${current + 1})" ${current === totalPages ? 'disabled' : ''}>下一页</button>
+                <button onclick="loadArticles(${totalPages})" ${current === totalPages ? 'disabled' : ''}>末页</button>
+            `;
+
+            paginationElement.innerHTML = paginationHtml;
+        }
+
+        // 检查登录状态
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+            // 检查 token 是否过期
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                const tokenData = JSON.parse(jsonPayload);
+                
+                if (tokenData.exp * 1000 < Date.now()) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                    return;
+                }
+            } catch (error) {
+                console.error('Token 解析错误:', error);
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+                return;
+            }
+        }
+
+        // 删除文章
+        async function deleteArticle(articleId) {
+            if (!confirm('确定要删除这篇文章吗？')) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/articles/${articleId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    alert('文章删除成功');
+                    loadArticles();
+                } else {
+                    const data = await response.json();
+                    alert(data.message || '删除失败');
+                }
+            } catch (error) {
+                console.error('删除文章错误:', error);
+                alert('删除失败，请稍后重试');
+            }
+        }
+
+        // 页面加载时执行
+        window.onload = () => {
+            checkAuth();
+            loadArticles(1);
+        };
+    </script>
+</body>
+</html>

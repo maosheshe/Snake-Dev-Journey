@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户注册</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #40a9ff;
+        }
+        .switch-form {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="registerForm">
+            <h2>注册</h2>
+            <div class="form-group">
+                <input type="text" id="registerUsername" placeholder="用户名">
+            </div>
+            <div class="form-group">
+                <input type="password" id="registerPassword" placeholder="密码">
+            </div>
+            <div class="form-group">
+                <input type="password" id="confirmPassword" placeholder="确认密码">
+            </div>
+            <button onclick="register()">注册</button>
+            <div class="switch-form">
+                <a href="/login.html">已有账号？立即登录</a>
+            </div>
+            <div id="registerError" class="error-message"></div>
+        </div>
+    </div>
+
+    <script>
+        async function register() {
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const errorElement = document.getElementById('registerError');
+
+            if (!username || !password) {
+                errorElement.style.display = 'block';
+                errorElement.textContent = '用户名和密码不能为空';
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                errorElement.style.display = 'block';
+                errorElement.textContent = '两次输入的密码不一致';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert('注册成功！');
+                    window.location.href = '/login.html';
+                } else {
+                    errorElement.style.display = 'block';
+                    errorElement.textContent = data.message || '注册失败';
+                }
+            } catch (error) {
+                errorElement.style.display = 'block';
+                errorElement.textContent = '服务器错误，请稍后重试';
+            }
+        }
+    </script>
+</body>
+</html>

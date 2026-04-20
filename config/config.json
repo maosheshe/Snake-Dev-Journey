@@ -1,0 +1,26 @@
+{
+  "development": {
+    "username": "user_auth",
+    "password": "ivy1234",
+    "database": "user_auth",
+    "host": "43.143.18.145",
+    "dialect": "mysql",
+    "timezone": "+08:00"
+  },
+  "test": {
+    "username": "user_auth",
+    "password": "ivy1234",
+    "database": "user_auth",
+    "host": "43.143.18.145",
+    "dialect": "mysql",
+    "timezone": "+08:00"
+  },
+  "production": {
+    "username": "user_auth",
+    "password": "ivy1234",
+    "database": "user_auth",
+    "host": "43.143.18.145",
+    "dialect": "mysql",
+    "timezone": "+08:00"
+  }
+}
