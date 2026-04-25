@@ -3,81 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用户注册</title>
+    <title>注册 - 蛇蛇的开发之旅</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        .auth-container {
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f2f5;
-        }
-        .container {
-            background-color: white;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            width: 300px;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        input {
+
+        .auth-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
             width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
+            max-width: 400px;
+            padding: 40px;
+            box-shadow: var(--shadow-main);
         }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #1890ff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #40a9ff;
-        }
-        .switch-form {
+
+        .auth-header {
             text-align: center;
-            margin-top: 10px;
+            margin-bottom: 32px;
         }
+
+        .auth-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .auth-header p {
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            width: 18px;
+            height: 18px;
+        }
+
+        .input-wrapper input {
+            padding-left: 40px;
+        }
+
         .error-message {
-            color: red;
-            font-size: 14px;
-            margin-top: 5px;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 24px;
+            font-size: 0.9rem;
             display: none;
+            border: 1px solid rgba(239, 68, 68, 0.2);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div id="registerForm">
-            <h2>注册</h2>
-            <div class="form-group">
-                <input type="text" id="registerUsername" placeholder="用户名">
+    <div class="auth-container">
+        <div class="auth-card fade-in">
+            <div class="auth-header">
+                <h2>加入我们</h2>
+                <p>开启你的极客开发之旅</p>
             </div>
-            <div class="form-group">
-                <input type="password" id="registerPassword" placeholder="密码">
-            </div>
-            <div class="form-group">
-                <input type="password" id="confirmPassword" placeholder="确认密码">
-            </div>
-            <button onclick="register()">注册</button>
-            <div class="switch-form">
-                <a href="/login.html">已有账号？立即登录</a>
-            </div>
+
             <div id="registerError" class="error-message"></div>
+
+            <div class="form-group">
+                <label>用户名</label>
+                <div class="input-wrapper">
+                    <i data-lucide="user"></i>
+                    <input type="text" id="registerUsername" class="search-input" placeholder="设置你的用户名">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>设置密码</label>
+                <div class="input-wrapper">
+                    <i data-lucide="lock"></i>
+                    <input type="password" id="registerPassword" class="search-input" placeholder="设置 6 位以上密码">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>确认密码</label>
+                <div class="input-wrapper">
+                    <i data-lucide="shield-check"></i>
+                    <input type="password" id="confirmPassword" class="search-input" placeholder="再次输入密码">
+                </div>
+            </div>
+
+            <button onclick="register()" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; margin-top: 8px;">
+                立即注册 <i data-lucide="user-plus"></i>
+            </button>
+
+            <div style="text-align: center; margin-top: 24px; font-size: 0.9rem; color: var(--text-muted);">
+                已经有账号了？ <a href="/login.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">立即登录</a>
+            </div>
         </div>
     </div>
 
     <script>
+        lucide.createIcons();
+
         async function register() {
             const username = document.getElementById('registerUsername').value;
             const password = document.getElementById('registerPassword').value;
@@ -86,7 +138,7 @@
 
             if (!username || !password) {
                 errorElement.style.display = 'block';
-                errorElement.textContent = '用户名和密码不能为空';
+                errorElement.textContent = '请填写完整的注册信息';
                 return;
             }
 
@@ -99,23 +151,20 @@
             try {
                 const response = await fetch('/api/register', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password }),
                 });
 
                 const data = await response.json();
                 if (response.ok) {
-                    alert('注册成功！');
-                    window.location.href = '/login.html';
+                    window.location.href = '/login.html?registered=true';
                 } else {
                     errorElement.style.display = 'block';
-                    errorElement.textContent = data.message || '注册失败';
+                    errorElement.textContent = data.message || '注册失败，用户名可能已存在';
                 }
             } catch (error) {
                 errorElement.style.display = 'block';
-                errorElement.textContent = '服务器错误，请稍后重试';
+                errorElement.textContent = '服务器连接超时，请重试';
             }
         }
     </script>

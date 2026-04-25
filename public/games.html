@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创意小游戏 - 蛇蛇的开发之旅</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .games-hero {
+            padding: 120px 0 60px;
+            text-align: center;
+            background: radial-gradient(circle at 50% 0%, var(--primary-glow), transparent 70%);
+        }
+
+        .game-card {
+            transition: var(--transition);
+        }
+
+        .game-card:hover {
+            transform: translateY(-12px) scale(1.03);
+            box-shadow: 0 20px 40px -10px rgba(16, 185, 129, 0.3);
+        }
+
+        .game-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            z-index: 10;
+        }
+
+        .play-btn {
+            background: var(--primary);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: var(--transition);
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .game-card:hover .play-btn {
+            opacity: 1;
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body>
+    <header class="header" id="header">
+        <div class="container nav">
+            <a href="/" class="logo">
+                <i data-lucide="terminal"></i>
+                <span>蛇蛇</span>的开发之旅
+            </a>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <a href="/" class="btn" style="border: 1px solid var(--border-glass)">
+                    <i data-lucide="home"></i> 返回主页
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="games-hero">
+            <div class="container">
+                <h1 class="fade-in" style="font-size: 3.5rem; margin-bottom: 16px;">创意<span style="color: var(--primary)">小游戏</span></h1>
+                <p class="fade-in" style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+                    这里展示了我用代码构建的奇妙世界。从经典的复刻到疯狂的创意，每一个像素都跳动着逻辑的旋律。
+                </p>
+            </div>
+        </section>
+
+        <div class="container" style="padding-bottom: 80px;">
+            <div class="article-grid" id="gameGrid">
+                <!-- 游戏列表将动态加载 -->
+                <div style="grid-column: 1/-1; text-align: center; padding: 100px;">
+                    <i data-lucide="loader-2" class="animate-spin" style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 16px;"></i>
+                    <p>正在寻找宝藏游戏...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer style="padding: 40px 0; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2);">
+        <div class="container" style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+            <div style="display: flex; gap: 30px; font-size: 0.9rem; color: var(--text-muted);">
+                <span>Copyright © 2025 毛蛇蛇</span>
+                <a href="https://beian.miit.gov.cn/" target="_blank" style="color: inherit; text-decoration: none;">粤ICP备2025400537号-1</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // 本地精品游戏数据
+        const featuredGames = [
+            { id: 'sudoku', title: '数独挑战', summary: '经典的逻辑解谜游戏，挑战你的脑力极限。', path: '/game/sudoku.html', cover: '/images/articles/article1.jpg' },
+            { id: 'match3', title: '消除大师', summary: '爽快感十足的消除挑战，指尖上的解压神器。', path: '/game/match3.html', cover: '/images/articles/article2.jpg' },
+            { id: 'arrow-out', title: '箭头突围', summary: '空间想象力大考验，规划路线，顺利突围。', path: '/game/arrow-out.html', cover: '/images/articles/article3.jpg' },
+            { id: 'number-match', title: '数字连连看', summary: '眼力与速度的双重竞技，寻找匹配的数字。', path: '/game/number-match.html', cover: '/images/articles/article4.jpg' }
+        ];
+
+        function loadGames() {
+            const grid = document.getElementById('gameGrid');
+            
+            // 仅渲染本地精品游戏
+            grid.innerHTML = featuredGames.map(game => `
+                <div class="article-card game-card fade-in" onclick="location.href='${game.path}'">
+                    <span class="game-badge">精品作品</span>
+                    <img src="${game.cover}" class="card-image" alt="${game.title}">
+                    <div class="card-body">
+                        <h3 class="card-title">${game.title}</h3>
+                        <p style="color: var(--text-dim); font-size: 0.9rem; margin-bottom: 16px;">${game.summary}</p>
+                        <div class="card-meta" style="border-top: none; padding-top: 0;">
+                            <span style="display: flex; align-items: center; gap: 6px; color: var(--primary);">
+                                <i data-lucide="zap" style="width: 16px; height: 16px;"></i> 点击立即开始
+                            </span>
+                        </div>
+                    </div>
+                    <div class="play-btn">
+                        <i data-lucide="play" style="fill: white;"></i>
+                    </div>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        window.onload = loadGames;
+    </script>
+</body>
+</html>

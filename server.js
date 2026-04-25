@@ -35,11 +35,11 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"], // 默认只允许同源资源
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"], // 允许从 cdn.jsdelivr.net 加载脚本
-            styleSrc: ["'self'", "'unsafe-inline'"], // 允许内联样式
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net", "https://unpkg.com"], // 允许加载脚本
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"], // 允许内联样式和 Google Fonts
             imgSrc: ["'self'", "data:", "https:"], // 允许同源图片、data URL和HTTPS图片
             connectSrc: ["'self'"], // 限制AJAX/WebSocket连接源
-            fontSrc: ["'self'"], // 限制字体加载源
+            fontSrc: ["'self'", "https://fonts.gstatic.com"], // 允许加载 Google 字体文件
             objectSrc: ["'none'"], // 禁止<object>标签
             mediaSrc: ["'self'"], // 限制多媒体资源源
             frameSrc: ["'self'"] // 允许加载同源 iframe (用于 HTML 文章/游戏)

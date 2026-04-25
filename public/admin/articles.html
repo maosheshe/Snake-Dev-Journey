@@ -3,223 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文章列表</title>
+    <title>文章管理 - 蛇蛇的开发之旅</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f0f2f5;
+        .admin-layout {
+            padding-top: 120px;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 40px;
         }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
+
+        .admin-sidebar {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            height: fit-content;
+            position: sticky;
+            top: 100px;
         }
-        .header {
+
+        .admin-nav-link {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-        }
-        .article-list {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .article-item {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-        }
-        .article-item:last-child {
-            border-bottom: none;
-        }
-        .article-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .article-meta {
-            color: #666;
-            font-size: 14px;
-        }
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            gap: 12px;
+            padding: 14px 20px;
+            color: var(--text-muted);
             text-decoration: none;
-            display: inline-block;
+            border-radius: var(--radius-md);
+            transition: var(--transition);
         }
-        .btn-primary {
-            background-color: #1890ff;
-            color: white;
+
+        .admin-nav-link:hover, .admin-nav-link.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary);
         }
-        .btn-danger {
-            background-color: #ff4d4f;
-            color: white;
+
+        .article-table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
         }
-        .btn:hover {
-            opacity: 0.8;
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        .pagination {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-            gap: 10px;
+
+        .admin-table th {
+            background: rgba(255, 255, 255, 0.03);
+            text-align: left;
+            padding: 16px 24px;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border-glass);
         }
-        .pagination button {
-            padding: 8px 16px;
-            border: 1px solid #1890ff;
-            background-color: white;
-            color: #1890ff;
+
+        .admin-table td {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-glass);
+            color: var(--text-main);
+        }
+
+        .admin-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            padding: 4px 10px;
             border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-tech { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .badge-game { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .badge-none { background: rgba(148, 163, 184, 0.1); color: #94a3b8; }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-glass);
+            background: rgba(255,255,255,0.05);
+            color: var(--text-muted);
+            transition: var(--transition);
             cursor: pointer;
         }
-        .pagination button.active {
-            background-color: #1890ff;
-            color: white;
+
+        .action-btn:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+            background: rgba(16, 185, 129, 0.1);
         }
-        .pagination button:disabled {
-            border-color: #d9d9d9;
-            color: #d9d9d9;
-            cursor: not-allowed;
+
+        .action-btn.delete:hover {
+            color: #ef4444;
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>文章列表</h1>
-            <div>
-                <a href="/" class="btn btn-primary" style="margin-right: 10px;">返回主页</a>
-                <a href="create-article.html" class="btn btn-primary">新增文章</a>
+    <header class="header" id="header">
+        <div class="container nav">
+            <a href="/" class="logo">
+                <i data-lucide="terminal"></i>
+                <span>蛇蛇</span>的开发之旅
+            </a>
+            <div style="display: flex; gap: 20px;">
+                <a href="/" class="btn" style="border: 1px solid var(--border-glass)">
+                    <i data-lucide="home"></i> 访问首页
+                </a>
             </div>
         </div>
+    </header>
 
-        <div class="article-list" id="articleList">
-            <!-- 文章列表将通过JavaScript动态加载 -->
-        </div>
-        <div class="pagination" id="pagination"></div>
-    </div>
+    <main class="container admin-layout">
+        <aside class="admin-sidebar">
+            <nav class="admin-nav" style="display: flex; flex-direction: column; gap: 10px;">
+                <a href="dashboard.html" class="admin-nav-link"><i data-lucide="layout-dashboard"></i> 仪表盘</a>
+                <a href="articles.html" class="admin-nav-link active"><i data-lucide="file-text"></i> 文章管理</a>
+                <a href="create-article.html" class="admin-nav-link"><i data-lucide="plus-circle"></i> 发布文章</a>
+                <a href="javascript:void(0)" onclick="logout()" class="admin-nav-link" style="margin-top: 20px; color: #ef4444;"><i data-lucide="log-out"></i> 安全退出</a>
+            </nav>
+        </aside>
+
+        <section class="admin-content">
+            <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h1 style="font-size: 2rem;">所有文章</h1>
+                <a href="create-article.html" class="btn btn-primary">
+                    <i data-lucide="plus"></i> 新增文章
+                </a>
+            </div>
+
+            <div class="article-table-card fade-in">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>标题</th>
+                            <th>分类</th>
+                            <th>数据</th>
+                            <th>日期</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="articleList">
+                        <!-- 由 JS 填充 -->
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 60px;">
+                                <i data-lucide="loader-2" class="animate-spin" style="margin-bottom: 12px; color: var(--primary);"></i>
+                                <p style="color: var(--text-dim);">正在搬运文章...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="pagination" id="pagination"></div>
+        </section>
+    </main>
 
     <script>
+        lucide.createIcons();
+
         let currentPage = 1;
         const pageSize = 10;
 
-        // 加载文章列表
         async function loadArticles(page = 1) {
             try {
                 const response = await fetch(`/api/articles?page=${page}&pageSize=${pageSize}`);
                 const data = await response.json();
                 
-                const articleList = document.getElementById('articleList');
-                articleList.innerHTML = data.data.articles.map(article => `
-                    <div class="article-item">
-                        <div class="article-title">${article.title}</div>
-                        <div class="article-meta">
-                            作者: ${article.user?.username || '未知'} | 
-                            创建时间: ${new Date(article.createdAt).toLocaleString()}
-                        </div>
-                        <div style="margin-top: 10px;">
-                            <a href="article-detail.html?id=${article.id}" class="btn btn-primary">查看</a>
-                            <button onclick="deleteArticle(${article.id})" class="btn btn-danger">删除</button>
-                        </div>
-                    </div>
-                `).join('');
-
-                // 渲染分页控件
+                const list = document.getElementById('articleList');
+                list.innerHTML = data.data.articles.map(article => {
+                    const categoryClass = article.category === '游戏' ? 'badge-game' : (article.category === '技术' ? 'badge-tech' : 'badge-none');
+                    return `
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600; margin-bottom: 4px;">${article.title}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-dim);">ID: ${article.id}</div>
+                            </td>
+                            <td><span class="badge ${categoryClass}">${article.category || '未分类'}</span></td>
+                            <td>
+                                <div style="display: flex; gap: 12px; font-size: 0.85rem; color: var(--text-muted);">
+                                    <span title="阅读量"><i data-lucide="eye" style="width:14px; height:14px; vertical-align:middle;"></i> ${article.views || 0}</span>
+                                    <span title="获赞数"><i data-lucide="heart" style="width:14px; height:14px; vertical-align:middle;"></i> ${article.likes || 0}</span>
+                                </div>
+                            </td>
+                            <td style="color: var(--text-dim); font-size: 0.85rem;">
+                                ${new Date(article.createdAt).toLocaleDateString()}
+                            </td>
+                            <td>
+                                <div class="action-btns">
+                                    <a href="article-detail.html?id=${article.id}" class="action-btn" title="详情"><i data-lucide="external-link" style="width:16px;"></i></a>
+                                    <a href="create-article.html?id=${article.id}" class="action-btn" title="编辑"><i data-lucide="edit-3" style="width:16px;"></i></a>
+                                    <button onclick="deleteArticle(${article.id})" class="action-btn delete" title="删除"><i data-lucide="trash-2" style="width:16px;"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                lucide.createIcons();
                 renderPagination(data.data.pagination);
             } catch (error) {
                 console.error('加载文章列表错误:', error);
             }
         }
 
-        // 渲染分页控件
         function renderPagination(pagination) {
-            const { total, current, pageSize, totalPages } = pagination;
+            const { current, totalPages } = pagination;
             const paginationElement = document.getElementById('pagination');
             
-            let paginationHtml = `
-                <button onclick="loadArticles(1)" ${current === 1 ? 'disabled' : ''}>首页</button>
-                <button onclick="loadArticles(${current - 1})" ${current === 1 ? 'disabled' : ''}>上一页</button>
-            `;
-
-            // 显示页码
-            for (let i = Math.max(1, current - 2); i <= Math.min(totalPages, current + 2); i++) {
-                paginationHtml += `
-                    <button onclick="loadArticles(${i})" class="${i === current ? 'active' : ''}">${i}</button>
-                `;
+            let html = '';
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button onclick="loadArticles(${i})" class="${i === current ? 'active' : ''}">${i}</button>`;
             }
-
-            paginationHtml += `
-                <button onclick="loadArticles(${current + 1})" ${current === totalPages ? 'disabled' : ''}>下一页</button>
-                <button onclick="loadArticles(${totalPages})" ${current === totalPages ? 'disabled' : ''}>末页</button>
-            `;
-
-            paginationElement.innerHTML = paginationHtml;
+            paginationElement.innerHTML = html;
         }
 
-        // 检查登录状态
-        function checkAuth() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                window.location.href = '/login.html';
-                return;
-            }
-            // 检查 token 是否过期
-            try {
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-                const tokenData = JSON.parse(jsonPayload);
-                
-                if (tokenData.exp * 1000 < Date.now()) {
-                    localStorage.removeItem('token');
-                    window.location.href = '/login.html';
-                    return;
-                }
-            } catch (error) {
-                console.error('Token 解析错误:', error);
-                localStorage.removeItem('token');
-                window.location.href = '/login.html';
-                return;
-            }
-        }
-
-        // 删除文章
-        async function deleteArticle(articleId) {
-            if (!confirm('确定要删除这篇文章吗？')) {
-                return;
-            }
-
+        async function deleteArticle(id) {
+            if (!confirm('确定要删除这篇文章吗？此操作不可逆。')) return;
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch(`/api/articles/${articleId}`, {
+                const response = await fetch(`/api/articles/${id}`, {
                     method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                    headers: { 'Authorization': `Bearer ${token}` }
                 });
-
                 if (response.ok) {
-                    alert('文章删除成功');
-                    loadArticles();
+                    loadArticles(currentPage);
                 } else {
-                    const data = await response.json();
-                    alert(data.message || '删除失败');
+                    alert('删除失败');
                 }
-            } catch (error) {
-                console.error('删除文章错误:', error);
-                alert('删除失败，请稍后重试');
+            } catch (err) {
+                console.error(err);
             }
         }
 
-        // 页面加载时执行
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            localStorage.removeItem('tokenExpiry');
+            window.location.href = '/login.html';
+        }
+
         window.onload = () => {
-            checkAuth();
             loadArticles(1);
         };
     </script>

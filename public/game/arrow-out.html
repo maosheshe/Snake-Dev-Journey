@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>箭箭消 - Arrow Out</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&display=swap">
+    <style>
+        :root {
+            --bg-dark: #0a0e17;
+            --bg-panel: #111827;
+            --primary: #00d4ff;
+            --secondary: #7c3aed;
+            --accent: #f472b6;
+            --success: #10b981;
+            --error: #ef4444;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --grid-bg: rgba(0, 0, 0, 0.3);
+            --arrow-bg: #1a2332;
+            --arrow-hover: #243044;
+            --arrow-active: #2d4a6f;
+            --glow: 0 0 15px rgba(0, 212, 255, 0.4);
+            --arrow-color-up: #00d4ff;
+            --arrow-color-right: #f472b6;
+            --arrow-color-down: #10b981;
+            --arrow-color-left: #7c3aed;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg-dark);
+            background-image: 
+                radial-gradient(ellipse at 20% 80%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(244, 114, 182, 0.05) 0%, transparent 70%);
+            font-family: 'Noto Sans SC', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 动态背景网格 */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(500px) rotateX(60deg);
+            animation: gridMove 20s linear infinite;
+            z-index: 1;
+        }
+
+        @keyframes gridMove {
+            0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+            100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+        }
+
+        .container {
+            background: linear-gradient(145deg, var(--bg-panel) 0%, #0d1117 100%);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 
+                0 0 60px rgba(0, 212, 255, 0.1),
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            position: relative;
+            max-width: 90vw;
+            width: fit-content;
+            z-index: 10;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            text-align: center;
+            color: var(--text);
+            font-size: 2.2rem;
+            margin-bottom: 4px;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+            letter-spacing: 4px;
+        }
+
+        h1 span {
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .header-info {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .level-badge {
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            font-family: 'Orbitron', sans-serif;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--bg-dark);
+            border-color: var(--primary);
+        }
+
+        .game-board {
+            display: grid;
+            gap: 8px;
+            background: var(--grid-bg);
+            padding: 12px;
+            border-radius: 16px;
+            border: 2px solid rgba(0, 212, 255, 0.1);
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            margin: 0 auto;
+            transition: transform 0.1s;
+        }
+
+        .slot {
+            width: 55px;
+            height: 55px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            border: 1px dashed rgba(255, 255, 255, 0.05);
+        }
+
+        .game-board.shake {
+            animation: boardShake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes boardShake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .game-board.urgent {
+            border-color: var(--error);
+            box-shadow: inset 0 0 50px rgba(239, 68, 68, 0.3), 0 0 20px rgba(239, 68, 68, 0.2);
+            animation: pulseUrgent 1s infinite alternate;
+        }
+
+        @keyframes pulseUrgent {
+            from { box-shadow: inset 0 0 30px rgba(239, 68, 68, 0.2); }
+            to { box-shadow: inset 0 0 60px rgba(239, 68, 68, 0.5); }
+        }
+
+        .arrow {
+            width: 55px;
+            height: 55px;
+            background: var(--arrow-bg);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: breath 3s ease-in-out infinite;
+        }
+
+        /* 方向颜色区分 */
+        .arrow[data-dir="up"] { --arrow-color: var(--arrow-color-up); }
+        .arrow[data-dir="right"] { --arrow-color: var(--arrow-color-right); }
+        .arrow[data-dir="down"] { --arrow-color: var(--arrow-color-down); }
+        .arrow[data-dir="left"] { --arrow-color: var(--arrow-color-left); }
+
+        .arrow::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 14px;
+            background: var(--arrow-color);
+            opacity: 0.1;
+            z-index: -1;
+            transition: opacity 0.3s;
+        }
+
+        @keyframes breath {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.02); opacity: 1; box-shadow: 0 0 15px var(--arrow-color); }
+        }
+
+        .arrow:hover {
+            background: var(--arrow-hover);
+            transform: scale(1.1) !important;
+            border-color: var(--arrow-color);
+            box-shadow: 0 0 20px var(--arrow-color);
+            z-index: 5;
+        }
+
+        /* 障碍物样式 */
+        .obstacle {
+            width: 55px;
+            height: 55px;
+            background: #374151;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #4b5563;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .obstacle::after {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(45deg);
+        }
+
+        /* 炸弹箭头样式 */
+        .arrow.bomb {
+            border-width: 2px;
+            border-style: dashed;
+            animation: pulse-bomb 1s infinite alternate;
+        }
+
+        @keyframes pulse-bomb {
+            from { box-shadow: 0 0 5px var(--error); }
+            to { box-shadow: 0 0 20px var(--error); }
+        }
+
+        .arrow.bomb svg {
+            fill: var(--error);
+        }
+
+        .arrow svg {
+            width: 35px;
+            height: 35px;
+            fill: var(--text);
+            transition: all 0.3s;
+        }
+
+        .arrow:hover svg {
+            fill: var(--arrow-color);
+            filter: drop-shadow(0 0 8px var(--arrow-color));
+        }
+
+        .arrow.flying {
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .arrow.blocked {
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-4px) rotate(-2deg); }
+            40% { transform: translateX(4px) rotate(2deg); }
+            60% { transform: translateX(-4px) rotate(-1deg); }
+            80% { transform: translateX(4px) rotate(1deg); }
+        }
+
+        /* Combo 特效 */
+        .combo-text {
+            position: fixed;
+            pointer-events: none;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            color: var(--accent);
+            font-size: 2.5rem;
+            text-shadow: 0 0 20px var(--accent);
+            z-index: 2000;
+            animation: comboPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes comboPop {
+            0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(5deg); opacity: 1; }
+            100% { transform: scale(1) translateY(-50px); opacity: 0; }
+        }
+
+        .score-pop {
+            position: fixed;
+            pointer-events: none;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-shadow: 0 0 10px var(--primary);
+            z-index: 2000;
+            animation: scoreFloat 0.8s ease-out forwards;
+        }
+
+        @keyframes scoreFloat {
+            0% { transform: translateY(0); opacity: 0; }
+            20% { opacity: 1; }
+            100% { transform: translateY(-40px); opacity: 0; }
+        }
+
+        /* 粒子画布 */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 99;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+
+        .info-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        /* Stats Panel */
+        .stats-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 320px;
+            height: 100vh;
+            background: var(--bg-panel);
+            border-left: 1px solid rgba(0, 212, 255, 0.2);
+            padding: 24px;
+            overflow-y: auto;
+            z-index: 1100;
+            animation: slideIn 0.3s ease;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes slideIn {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(0); }
+        }
+
+        .stats-panel.active {
+            display: block;
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .stats-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+        }
+
+        .stats-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stats-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stats-card-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+        }
+
+        .stats-card-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .stats-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1099;
+        }
+
+        .stats-overlay.active {
+            display: block;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-panel);
+            padding: 40px;
+            border-radius: 24px;
+            text-align: center;
+            border: 2px solid var(--success);
+            box-shadow: 0 0 60px rgba(16, 185, 129, 0.4);
+            animation: modalIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        @keyframes modalIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: var(--success);
+            margin-bottom: 8px;
+        }
+
+        .modal p {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .trophy {
+            font-size: 4rem;
+            margin-bottom: 12px;
+            display: block;
+            animation: bounce 1s ease infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .modal.lose-modal .modal-content {
+            border-color: var(--error);
+            box-shadow: 0 0 60px rgba(239, 68, 68, 0.4);
+        }
+
+        .modal.lose-modal h2 {
+            color: var(--error);
+        }
+
+        .info-item.error .info-value {
+            color: var(--error);
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 10px;
+            z-index: 2000;
+            color: white;
+            font-weight: bold;
+            animation: slideDown 0.3s ease;
+        }
+
+        .message.success { background: var(--success); }
+        .message.error { background: var(--error); }
+
+        @keyframes slideDown {
+            0% { transform: translate(-50%, -100%); }
+            100% { transform: translate(-50%, 0); }
+        }
+
+        @media (max-width: 600px) {
+            .arrow { width: 45px; height: 45px; }
+            .arrow svg { width: 28px; height: 28px; }
+            h1 { font-size: 1.6rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span>箭箭消</span> ARROW OUT</h1>
+        <p class="subtitle">点击箭头，清空棋盘</p>
+
+        <div class="header-info">
+            <div class="level-badge" id="levelDisplay">Level 1</div>
+            <div class="level-badge" style="background: linear-gradient(135deg, var(--primary), var(--secondary));">Score: <span id="scoreDisplay">0</span></div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="difficultyToggle">难度: 普通</button>
+            <button class="btn" id="resetBtn">重置本关</button>
+            <button class="btn" id="statsBtn">📊 统计</button>
+            <button class="btn" id="musicToggle">🔊 音乐</button>
+        </div>
+
+        <div class="game-board" id="gameBoard"></div>
+
+        <div class="game-info">
+            <div class="info-item">
+                <div class="info-label">剩余</div>
+                <div class="info-value" id="remainingCount">0</div>
+            </div>
+            <div class="info-item error">
+                <div class="info-label">失误</div>
+                <div class="info-value" id="mistakeCountDisplay">0/3</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">步数</div>
+                <div class="info-value" id="moveCount">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">倒计时</div>
+                <div class="info-value" id="timerDisplay">00:00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Panel -->
+    <canvas id="particleCanvas"></canvas>
+    <div class="stats-overlay" id="statsOverlay"></div>
+    <div class="stats-panel" id="statsPanel">
+        <div class="stats-header">
+            <div class="stats-title">游戏统计</div>
+            <button class="stats-close" id="statsClose">&times;</button>
+        </div>
+        <div class="stats-grid">
+            <div class="stats-card">
+                <div class="stats-card-value" id="statTotalGames">0</div>
+                <div class="stats-card-label">总局数</div>
+            </div>
+            <div class="stats-card">
+                <div class="stats-card-value" id="statMaxLevel">1</div>
+                <div class="stats-card-label">最高等级</div>
+            </div>
+            <div class="stats-card">
+                <div class="stats-card-value" id="statTotalArrows">0</div>
+                <div class="stats-card-label">已消除箭头</div>
+            </div>
+            <div class="stats-card">
+                <div class="stats-card-value" id="statTotalMoves">0</div>
+                <div class="stats-card-label">总步数</div>
+            </div>
+            <div class="stats-card" style="grid-column: span 2; background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(124, 58, 237, 0.1));">
+                <div class="stats-card-value" id="statHighScore" style="color: var(--accent);">0</div>
+                <div class="stats-card-label">历史最高分</div>
+            </div>
+        </div>
+        <button class="btn" style="width: 100%" id="clearStats">清空统计数据</button>
+    </div>
+
+    <div class="modal" id="winModal">
+        <div class="modal-content">
+            <span class="trophy">🚀</span>
+            <h2>关卡完成!</h2>
+            <p id="winStats">进入下一关...</p>
+            <button class="btn btn-primary" id="nextLevelBtn">下一关</button>
+        </div>
+    </div>
+
+    <div class="modal lose-modal" id="loseModal">
+        <div class="modal-content">
+            <span class="trophy">💥</span>
+            <h2 id="loseTitle">游戏结束</h2>
+            <p id="loseReason">很遗憾，失误次数过多！</p>
+            <button class="btn btn-primary" id="retryBtn">再试一次</button>
+        </div>
+    </div>
+
+    <script>
+        class ArrowOutGame {
+            constructor() {
+                this.level = 1;
+                this.gridSize = 3;
+                this.arrows = [];
+                this.moveCount = 0;
+                this.mistakeCount = 0;
+                this.maxMistakes = 3;
+                this.timer = 0;
+                this.timeLimit = 60;
+                this.timerInterval = null;
+                this.isAnimating = false;
+                this.isMusicOn = false;
+                this.audioCtx = null;
+                this.bgInterval = null;
+                this.isGameOver = false;
+
+                this.score = 0;
+                this.levelScoreStart = 0;
+                this.stats = this.loadStats();
+                
+                this.difficulties = ['easy', 'medium', 'hard'];
+                this.difficultyNames = { easy: '简单', medium: '普通', hard: '困难' };
+                this.difficulty = this.stats.difficulty || 'medium';
+                this.difficultyIndex = this.difficulties.indexOf(this.difficulty);
+                if (this.difficultyIndex === -1) this.difficultyIndex = 1;
+                
+                this.initUI();
+                this.initGame();
+                this.initParticles();
+                
+                this.combo = 0;
+                this.lastEliminatedTime = 0;
+            }
+
+            loadStats() {
+                const defaults = {
+                    totalGames: 0,
+                    maxLevel: 1,
+                    totalArrows: 0,
+                    totalMoves: 0,
+                    highScore: 0
+                };
+                const saved = localStorage.getItem('arrowOutStats');
+                return saved ? JSON.parse(saved) : defaults;
+            }
+
+            saveStats() {
+                localStorage.setItem('arrowOutStats', JSON.stringify(this.stats));
+            }
+
+            initUI() {
+                this.gameBoard = document.getElementById('gameBoard');
+                this.remainingCountDisplay = document.getElementById('remainingCount');
+                this.moveCountDisplay = document.getElementById('moveCount');
+                this.timerDisplay = document.getElementById('timerDisplay');
+                this.levelDisplay = document.getElementById('levelDisplay');
+                this.scoreDisplay = document.getElementById('scoreDisplay');
+                
+                const diffBtn = document.getElementById('difficultyToggle');
+                diffBtn.textContent = `难度: ${this.difficultyNames[this.difficulty]}`;
+                
+                diffBtn.addEventListener('click', (e) => {
+                    this.difficultyIndex = (this.difficultyIndex + 1) % 3;
+                    this.difficulty = this.difficulties[this.difficultyIndex];
+                    e.target.textContent = `难度: ${this.difficultyNames[this.difficulty]}`;
+                    this.stats.difficulty = this.difficulty;
+                    this.saveStats();
+                    
+                    this.level = 1;
+                    this.score = 0;
+                    this.initGame();
+                    this.showMessage(`难度已切换至 ${this.difficultyNames[this.difficulty]}，游戏重新开始`, 'success');
+                });
+                
+                document.getElementById('resetBtn').addEventListener('click', () => this.initGame());
+                document.getElementById('statsBtn').addEventListener('click', () => this.toggleStats(true));
+                document.getElementById('statsClose').addEventListener('click', () => this.toggleStats(false));
+                document.getElementById('statsOverlay').addEventListener('click', () => this.toggleStats(false));
+                document.getElementById('nextLevelBtn').addEventListener('click', () => this.nextLevel());
+                document.getElementById('retryBtn').addEventListener('click', () => {
+                    this.level = 1;
+                    this.score = 0;
+                    this.initGame();
+                });
+                document.getElementById('musicToggle').addEventListener('click', () => this.toggleMusic());
+                document.getElementById('clearStats').addEventListener('click', () => {
+                    if (confirm('确定要清空所有统计数据吗？')) {
+                        localStorage.removeItem('arrowOutStats');
+                        this.stats = this.loadStats();
+                        this.renderStats();
+                        this.showMessage('统计已清空', 'success');
+                    }
+                });
+            }
+
+            initGame() {
+                this.gridSize = Math.min(3 + Math.floor((this.level - 1) / 2), 8);
+                const density = 0.4 + Math.min(this.level * 0.05, 0.4);
+                
+                const cellSize = 55;
+                const gap = 8;
+                const padding = 24; 
+                const boardSize = this.gridSize * cellSize + (this.gridSize - 1) * gap + padding;
+                
+                this.gameBoard.style.width = `${boardSize}px`;
+                this.gameBoard.style.height = `${boardSize}px`;
+                this.gameBoard.style.gridTemplateColumns = `repeat(${this.gridSize}, 1fr)`;
+                this.gameBoard.style.gridTemplateRows = `repeat(${this.gridSize}, 1fr)`;
+                this.gameBoard.innerHTML = '';
+                
+                this.arrows = [];
+                this.moveCount = 0;
+                this.mistakeCount = 0;
+                this.isGameOver = false;
+                this.isAnimating = false;
+                
+                // 如果是手动重置当前关卡，恢复到本关开始前的分数
+                if (this.levelScoreStart !== undefined && this.level > 1) {
+                    this.score = this.levelScoreStart;
+                } else {
+                    this.levelScoreStart = this.score;
+                }
+                
+                this.updateScore(0); 
+                this.moveCountDisplay.textContent = '0';
+                document.getElementById('mistakeCountDisplay').textContent = `0/${this.maxMistakes}`;
+                this.levelDisplay.textContent = `Level ${this.level}`;
+                
+                document.getElementById('winModal').classList.remove('active');
+                document.getElementById('loseModal').classList.remove('active');
+                
+                this.stats.totalGames++;
+                this.saveStats();
+                this.generateLevel(density);
+                
+                // 动态时间限制，受难度影响
+                let timeMultiplier = 3;
+                let baseTime = 20;
+                if (this.difficulty === 'easy') {
+                    timeMultiplier = 4;
+                    baseTime = 30;
+                } else if (this.difficulty === 'hard') {
+                    timeMultiplier = 2;
+                    baseTime = 15;
+                }
+                this.timeLimit = baseTime + this.arrows.length * timeMultiplier;
+                
+                this.renderBoard();
+                this.resetTimer();
+                this.updateRemaining();
+            }
+
+            generateLevel(density) {
+                const totalCells = this.gridSize * this.gridSize;
+                const grid = Array(this.gridSize).fill().map(() => Array(this.gridSize).fill(null));
+                this.obstacles = [];
+                
+                // 1. 决定关卡形状 (Level Shape)
+                // 形状掩码：0 = 不可用, 1 = 可用
+                let mask = Array(this.gridSize).fill().map(() => Array(this.gridSize).fill(1));
+                if (this.level >= 5) {
+                    const shapeType = this.level % 4;
+                    const center = Math.floor(this.gridSize / 2);
+                    for (let y = 0; y < this.gridSize; y++) {
+                        for (let x = 0; x < this.gridSize; x++) {
+                            if (shapeType === 1) { // 十字形
+                                if (x !== center && y !== center) mask[y][x] = 0;
+                            } else if (shapeType === 2) { // 菱形
+                                const dist = Math.abs(x - center) + Math.abs(y - center);
+                                if (dist > center) mask[y][x] = 0;
+                            } else if (shapeType === 3) { // 镂空中心
+                                if (x >= center-1 && x <= center+1 && y >= center-1 && y <= center+1) mask[y][x] = 0;
+                            }
+                        }
+                    }
+                }
+
+                // 2. 放置障碍物 (Obstacles)
+                if (this.level > 3) {
+                    const obstacleCount = Math.min(Math.floor(this.level / 2), 5);
+                    let placed = 0;
+                    while (placed < obstacleCount) {
+                        const x = Math.floor(Math.random() * this.gridSize);
+                        const y = Math.floor(Math.random() * this.gridSize);
+                        if (mask[y][x] === 1 && !grid[y][x]) {
+                            grid[y][x] = { type: 'obstacle', x, y };
+                            this.obstacles.push({ x, y });
+                            placed++;
+                        }
+                    }
+                }
+
+                // 3. 放置箭头
+                let targetCount = Math.floor(totalCells * density);
+                let placed = 0;
+                let attempts = 0;
+                const maxAttempts = 2000;
+                const directions = [
+                    { id: 'up', dx: 0, dy: -1, angle: 0 },
+                    { id: 'right', dx: 1, dy: 0, angle: 90 },
+                    { id: 'down', dx: 0, dy: 1, angle: 180 },
+                    { id: 'left', dx: -1, dy: 0, angle: 270 }
+                ];
+
+                while (placed < targetCount && attempts < maxAttempts) {
+                    attempts++;
+                    const x = Math.floor(Math.random() * this.gridSize);
+                    const y = Math.floor(Math.random() * this.gridSize);
+                    if (mask[y][x] === 0 || grid[y][x]) continue;
+
+                    const dir = directions[Math.floor(Math.random() * directions.length)];
+                    
+                    // 检查生成时路径是否畅通（逆向生成逻辑：确保至少有一个方向可以飞出）
+                    let curX = x + dir.dx;
+                    let curY = y + dir.dy;
+                    let clear = true;
+                    while (curX >= 0 && curX < this.gridSize && curY >= 0 && curY < this.gridSize) {
+                        if (grid[curY][curX]) { clear = false; break; }
+                        curX += dir.dx; curY += dir.dy;
+                    }
+
+                    if (clear) {
+                        const isBomb = this.level > 8 && Math.random() < 0.1;
+                        grid[y][x] = { type: 'arrow', x, y, dir, isBomb };
+                        placed++;
+                    }
+                }
+
+                this.arrows = [];
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        if (grid[y][x] && grid[y][x].type === 'arrow') {
+                            this.arrows.push(grid[y][x]);
+                        } else if (!grid[y][x] && mask[y][x] === 0) {
+                            // 形状以外的部分不渲染
+                        }
+                    }
+                }
+                this.gridData = grid; // 保存网格状态用于渲染
+                this.gridMask = mask; // 保存形状用于渲染 Slot
+            }
+
+            renderBoard() {
+                const ARROW_SVG = `<svg viewBox="0 0 24 24"><path d="M12 2L4.5 9.5L6 11L11 6V22H13V6L18 11L19.5 9.5L12 2Z"/></svg>`;
+                const BOMB_SVG = `<svg viewBox="0 0 24 24"><path d="M11.5,2C11.5,2 11.67,2 12,2C12.33,2 12.5,2 12.5,2V3H14.5V4H15.5V5H16.5V6H17.5V7H18.5V8H19.5V10H20.5V14H19.5V16H18.5V17H17.5V18H16.5V19H15.5V20H14.5V21H9.5V20H8.5V19H7.5V18H6.5V17H5.5V16H4.5V14H3.5V10H4.5V8H5.5V7H6.5V6H7.5V5H8.5V4H10.5V3V2M11,6V9H13V6H11M11,11V16H13V11H11Z"/></svg>`;
+                this.gameBoard.innerHTML = '';
+                
+                for (let y = 0; y < this.gridSize; y++) {
+                    for (let x = 0; x < this.gridSize; x++) {
+                        // 即使没有物体，也要渲染 Slot 以显示形状
+                        if (this.gridMask && this.gridMask[y][x] === 1) {
+                            const slot = document.createElement('div');
+                            slot.className = 'slot';
+                            slot.style.gridColumn = x + 1;
+                            slot.style.gridRow = y + 1;
+                            this.gameBoard.appendChild(slot);
+                        }
+
+                        const cell = this.gridData[y][x];
+                        if (!cell) continue;
+
+                        const el = document.createElement('div');
+                        el.style.gridColumn = x + 1;
+                        el.style.gridRow = y + 1;
+                        el.style.position = 'relative';
+                        el.style.zIndex = '2';
+
+                        if (cell.type === 'obstacle') {
+                            el.className = 'obstacle';
+                            el.innerHTML = '🧱';
+                        } else if (cell.type === 'arrow') {
+                            el.className = `arrow ${cell.isBomb ? 'bomb' : ''}`;
+                            el.dataset.dir = cell.dir.id;
+                            el.innerHTML = cell.isBomb ? BOMB_SVG : ARROW_SVG;
+                            el.querySelector('svg').style.transform = `rotate(${cell.dir.angle}deg)`;
+                            el.addEventListener('click', () => this.handleArrowClick(cell, el));
+                            cell.el = el;
+                        }
+                        this.gameBoard.appendChild(el);
+                    }
+                }
+            }
+
+            handleArrowClick(arrow, el) {
+                if (this.isAnimating || this.isGameOver) return;
+
+                // 炸弹应该无视阻塞直接触发
+                if (arrow.isBomb) {
+                    this.triggerBomb(arrow, el);
+                    return;
+                }
+
+                const blockedBy = this.checkBlocking(arrow);
+                if (blockedBy) {
+                    this.playSound('blocked');
+                    el.classList.add('blocked');
+                    this.gameBoard.classList.add('shake');
+                    setTimeout(() => this.gameBoard.classList.remove('shake'), 400);
+                    this.createExplosion(el, 'error');
+                    
+                    this.mistakeCount++;
+                    document.getElementById('mistakeCountDisplay').textContent = `${this.mistakeCount}/${this.maxMistakes}`;
+                    
+                    if (this.mistakeCount > this.maxMistakes) {
+                        this.gameOver('失误次数过多！');
+                    }
+                    
+                    setTimeout(() => el.classList.remove('blocked'), 400);
+                    return;
+                }
+
+                // Combo Logic
+                const now = Date.now();
+                if (now - this.lastEliminatedTime < 1000) {
+                    this.combo++;
+                } else {
+                    this.combo = 1;
+                }
+                this.lastEliminatedTime = now;
+                
+                if (this.combo > 1) {
+                    this.showCombo(el);
+                    if (this.combo === 10) {
+                        this.showMessage('🔥 Combo King!', 'success');
+                    }
+                }
+
+                const points = 100 * this.combo;
+                this.updateScore(points);
+                this.showScorePop(el, points);
+
+                if (this.combo >= 5) {
+                    this.gameBoard.classList.add('shake');
+                    setTimeout(() => this.gameBoard.classList.remove('shake'), 400);
+                }
+
+                this.playSound('eliminate', this.combo);
+                this.isAnimating = true;
+                this.moveCount++;
+                this.stats.totalMoves++;
+                this.moveCountDisplay.textContent = this.moveCount;
+                
+                el.classList.add('flying');
+                
+                const trailInterval = setInterval(() => {
+                    if (el.parentNode) {
+                        this.createTrail(el, arrow.dir.id);
+                    } else {
+                        clearInterval(trailInterval);
+                    }
+                }, 30);
+
+                const distance = 1000;
+                const targetX = arrow.dir.dx * distance;
+                const targetY = arrow.dir.dy * distance;
+
+                el.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(${targetX}px, ${targetY}px) scale(0.5)`, opacity: 0 }
+                ], { duration: 600, easing: 'ease-in' }).onfinish = () => {
+                    clearInterval(trailInterval);
+                    this.createExplosion(el, arrow.dir.id, true);
+                    this.arrows = this.arrows.filter(a => a !== arrow);
+                    this.stats.totalArrows++;
+                    el.remove();
+                    this.isAnimating = false;
+                    this.updateRemaining();
+                    this.checkWin();
+                };
+            }
+
+            checkBlocking(arrow) {
+                for (let other of this.arrows) {
+                    if (other === arrow) continue;
+                    if (arrow.dir.dx !== 0) {
+                        if (other.y === arrow.y && Math.sign(other.x - arrow.x) === Math.sign(arrow.dir.dx)) return other;
+                    } else {
+                        if (other.x === arrow.x && Math.sign(other.y - arrow.y) === Math.sign(arrow.dir.dy)) return other;
+                    }
+                }
+                // 检查障碍物
+                for (let obs of this.obstacles) {
+                    if (arrow.dir.dx !== 0) {
+                        if (obs.y === arrow.y && Math.sign(obs.x - arrow.x) === Math.sign(arrow.dir.dx)) return obs;
+                    } else {
+                        if (obs.x === arrow.x && Math.sign(obs.y - arrow.y) === Math.sign(arrow.dir.dy)) return obs;
+                    }
+                }
+                return null;
+            }
+
+            triggerBomb(arrow, el) {
+                this.isAnimating = true;
+                this.playSound('eliminate', 5);
+                this.createExplosion(el, 'error', true);
+                this.showMessage('BOOM!', 'error');
+                
+                const range = 1;
+                const toRemove = this.arrows.filter(a => 
+                    Math.abs(a.x - arrow.x) <= range && Math.abs(a.y - arrow.y) <= range
+                );
+
+                toRemove.forEach((a, i) => {
+                    setTimeout(() => {
+                        this.createExplosion(a.el, a.dir ? a.dir.id : 'error', true);
+                        this.updateScore(200);
+                        this.arrows = this.arrows.filter(arr => arr !== a);
+                        a.el.remove();
+                        if (i === toRemove.length - 1) {
+                            this.isAnimating = false;
+                            this.updateRemaining();
+                            this.checkWin();
+                        }
+                    }, i * 100);
+                });
+            }
+
+            updateRemaining() {
+                this.remainingCountDisplay.textContent = this.arrows.length;
+            }
+
+            updateScore(points) {
+                this.score += points;
+                this.scoreDisplay.textContent = this.score;
+                // 实时检查并保存最高分
+                if (this.score > (this.stats.highScore || 0)) {
+                    this.stats.highScore = this.score;
+                    this.saveStats();
+                }
+            }
+
+            showScorePop(el, points) {
+                const rect = el.getBoundingClientRect();
+                const pop = document.createElement('div');
+                pop.className = 'score-pop';
+                pop.textContent = `+${points}`;
+                pop.style.left = `${rect.left + rect.width / 2}px`;
+                pop.style.top = `${rect.top}px`;
+                document.body.appendChild(pop);
+                setTimeout(() => pop.remove(), 800);
+            }
+
+            checkWin() {
+                if (this.arrows.length === 0) {
+                    this.playSound('win');
+                    clearInterval(this.timerInterval);
+                    
+                    const timeBonus = this.timer * 50;
+                    if (timeBonus > 0) {
+                        this.updateScore(timeBonus);
+                        this.showMessage(`时间奖励: +${timeBonus}`, 'success');
+                    }
+
+                    if (this.mistakeCount === 0) {
+                        const perfectBonus = 1000 * this.level;
+                        this.updateScore(perfectBonus);
+                        this.showMessage(`完美通关奖励: +${perfectBonus}`, 'success');
+                    }
+
+                    this.stats.maxLevel = Math.max(this.stats.maxLevel, this.level);
+                    this.saveStats();
+                    
+                    setTimeout(() => {
+                        const winModal = document.getElementById('winModal');
+                        document.getElementById('winStats').textContent = `得分: ${this.score} | 奖励: ${timeBonus} | 步数: ${this.moveCount}`;
+                        winModal.classList.add('active');
+                    }, 500);
+                }
+            }
+
+            gameOver(reason) {
+                if (this.isGameOver) return;
+                this.isGameOver = true;
+                clearInterval(this.timerInterval);
+                this.playSound('blocked');
+                
+                setTimeout(() => {
+                    const loseModal = document.getElementById('loseModal');
+                    document.getElementById('loseReason').textContent = reason;
+                    loseModal.classList.add('active');
+                }, 500);
+            }
+
+            nextLevel() {
+                document.getElementById('winModal').classList.remove('active');
+                this.level++;
+                this.levelScoreStart = this.score; // 进入下一关前记录当前分数为起始分
+                this.initGame();
+            }
+
+            resetTimer() {
+                if (this.timerInterval) clearInterval(this.timerInterval);
+                this.timer = this.timeLimit;
+                this.updateTimerDisplay();
+                this.timerInterval = setInterval(() => {
+                    this.timer--;
+                    this.updateTimerDisplay();
+                    if (this.timer <= 0) {
+                        this.gameOver('时间到！');
+                    }
+                    if (this.timer <= 10) {
+                        this.gameBoard.classList.add('urgent');
+                    } else {
+                        this.gameBoard.classList.remove('urgent');
+                    }
+                }, 1000);
+            }
+
+            updateTimerDisplay() {
+                const min = Math.floor(Math.max(0, this.timer) / 60).toString().padStart(2, '0');
+                const sec = (Math.max(0, this.timer) % 60).toString().padStart(2, '0');
+                this.timerDisplay.textContent = `${min}:${sec}`;
+                if (this.timer <= 5) {
+                    this.timerDisplay.style.color = 'var(--error)';
+                } else {
+                    this.timerDisplay.style.color = 'var(--primary)';
+                }
+            }
+
+            toggleStats(show) {
+                const panel = document.getElementById('statsPanel');
+                const overlay = document.getElementById('statsOverlay');
+                if (show) {
+                    this.renderStats();
+                    panel.classList.add('active');
+                    overlay.classList.add('active');
+                } else {
+                    panel.classList.remove('active');
+                    overlay.classList.remove('active');
+                }
+            }
+
+            renderStats() {
+                document.getElementById('statTotalGames').textContent = this.stats.totalGames;
+                document.getElementById('statMaxLevel').textContent = this.stats.maxLevel;
+                document.getElementById('statTotalArrows').textContent = this.stats.totalArrows;
+                document.getElementById('statTotalMoves').textContent = this.stats.totalMoves;
+                document.getElementById('statHighScore').textContent = this.stats.highScore || 0;
+            }
+
+            showMessage(text, type) {
+                const msg = document.createElement('div');
+                msg.className = `message ${type}`;
+                msg.textContent = text;
+                document.body.appendChild(msg);
+                setTimeout(() => msg.remove(), 2000);
+            }
+
+            initAudio() {
+                if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            playSound(type, combo = 0) {
+                this.initAudio();
+                const now = this.audioCtx.currentTime;
+                const gain = this.audioCtx.createGain();
+                gain.connect(this.audioCtx.destination);
+
+                if (type === 'eliminate') {
+                    const osc = this.audioCtx.createOscillator();
+                    osc.connect(gain);
+                    osc.type = 'sine';
+                    const baseFreq = 600;
+                    const freq = baseFreq + combo * 100;
+                    osc.frequency.setValueAtTime(freq, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(); osc.stop(now + 0.1);
+                } else if (type === 'blocked') {
+                    const osc = this.audioCtx.createOscillator();
+                    osc.connect(gain);
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(150, now);
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(); osc.stop(now + 0.2);
+                } else if (type === 'win') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, i) => {
+                        setTimeout(() => {
+                            const osc = this.audioCtx.createOscillator();
+                            const g = this.audioCtx.createGain();
+                            osc.connect(g); g.connect(this.audioCtx.destination);
+                            osc.frequency.value = freq;
+                            g.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
+                            g.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.5);
+                            osc.start(); osc.stop(this.audioCtx.currentTime + 0.5);
+                        }, i * 150);
+                    });
+                }
+            }
+
+            toggleMusic() {
+                this.isMusicOn = !this.isMusicOn;
+                const btn = document.getElementById('musicToggle');
+                btn.textContent = this.isMusicOn ? '🔇 音乐' : '🔊 音乐';
+                if (this.isMusicOn) this.startBackgroundMusic();
+                else this.stopBackgroundMusic();
+            }
+
+            startBackgroundMusic() {
+                if (this.bgInterval) return;
+                this.initAudio();
+                const notes = [261.63, 329.63, 392, 440, 392, 329.63];
+                let idx = 0;
+                this.bgInterval = setInterval(() => {
+                    const now = this.audioCtx.currentTime;
+                    const osc = this.audioCtx.createOscillator();
+                    const g = this.audioCtx.createGain();
+                    osc.connect(g); g.connect(this.audioCtx.destination);
+                    osc.frequency.value = notes[idx % notes.length];
+                    g.gain.setValueAtTime(0.02, now);
+                    g.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+                    osc.start(); osc.stop(now + 1);
+                    idx++;
+                }, 1000);
+            }
+
+            stopBackgroundMusic() {
+                if (this.bgInterval) { clearInterval(this.bgInterval); this.bgInterval = null; }
+            }
+
+            initParticles() {
+                this.canvas = document.getElementById('particleCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                const resize = () => {
+                    this.canvas.width = window.innerWidth;
+                    this.canvas.height = window.innerHeight;
+                };
+                window.addEventListener('resize', resize);
+                resize();
+                const animate = () => {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    for (let i = this.particles.length - 1; i >= 0; i--) {
+                        const p = this.particles[i];
+                        p.update(); p.draw(this.ctx);
+                        if (p.life <= 0) this.particles.splice(i, 1);
+                    }
+                    requestAnimationFrame(animate);
+                };
+                animate();
+            }
+
+            createExplosion(el, colorKey, isSuccess = false) {
+                const rect = el.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                const color = colorKey === 'error' ? '#ef4444' : getComputedStyle(document.documentElement).getPropertyValue(`--arrow-color-${colorKey}`).trim() || '#00d4ff';
+                const count = isSuccess ? 30 : 15;
+                for (let i = 0; i < count; i++) this.particles.push(new Particle(x, y, color));
+            }
+
+            createTrail(el, colorKey) {
+                const rect = el.getBoundingClientRect();
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                const color = getComputedStyle(document.documentElement).getPropertyValue(`--arrow-color-${colorKey}`).trim() || '#00d4ff';
+                this.particles.push(new Particle(x, y, color, true));
+            }
+
+            showCombo(el) {
+                const rect = el.getBoundingClientRect();
+                const comboEl = document.createElement('div');
+                comboEl.className = 'combo-text';
+                comboEl.textContent = `Combo x${this.combo}`;
+                comboEl.style.left = `${rect.left}px`;
+                comboEl.style.top = `${rect.top - 50}px`;
+                document.body.appendChild(comboEl);
+                setTimeout(() => comboEl.remove(), 600);
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color, isTrail = false) {
+                this.x = x; this.y = y; this.color = color;
+                this.size = Math.random() * (isTrail ? 3 : 5) + 1;
+                this.speedX = (Math.random() - 0.5) * (isTrail ? 2 : 8);
+                this.speedY = (Math.random() - 0.5) * (isTrail ? 2 : 8);
+                this.life = 1.0;
+                this.decay = Math.random() * 0.05 + 0.02;
+                this.isTrail = isTrail;
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                this.life -= this.decay;
+                if (!this.isTrail) this.speedY += 0.15;
+            }
+            draw(ctx) {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+
+        window.onload = () => new ArrowOutGame();
+    </script>
+</body>
+</html>

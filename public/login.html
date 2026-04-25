@@ -3,113 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用户登录</title>
+    <title>登录 - 蛇蛇的开发之旅</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        .auth-container {
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f2f5;
-        }
-        .container {
-            background-color: white;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            width: 300px;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        input {
+
+        .auth-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
             width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
+            max-width: 400px;
+            padding: 40px;
+            box-shadow: var(--shadow-main);
         }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #1890ff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #40a9ff;
-        }
-        .switch-form {
+
+        .auth-header {
             text-align: center;
-            margin-top: 10px;
+            margin-bottom: 32px;
         }
+
+        .auth-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .auth-header p {
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            width: 18px;
+            height: 18px;
+        }
+
+        .input-wrapper input {
+            padding-left: 40px;
+        }
+
         .error-message {
-            color: red;
-            font-size: 14px;
-            margin-top: 5px;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 24px;
+            font-size: 0.9rem;
             display: none;
-        }
-        .remember-me {
-            display: flex;
-            align-items: center;
-            margin: 10px 0;
-        }
-        .remember-me input[type="checkbox"] {
-            width: auto;
-            margin-right: 8px;
-        }
-        .remember-me label {
-            color: #666;
-            font-size: 14px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div id="loginForm">
-            <h2>登录</h2>
-            <div class="form-group">
-                <input type="text" id="loginUsername" placeholder="用户名">
+    <div class="auth-container">
+        <div class="auth-card fade-in">
+            <div class="auth-header">
+                <h2>欢迎回来</h2>
+                <p>登录以管理你的文章和设置</p>
             </div>
-            <div class="form-group">
-                <input type="password" id="loginPassword" placeholder="密码">
-            </div>
-            <div class="remember-me">
-                <input type="checkbox" id="rememberMe" checked>
-                <label for="rememberMe">记住登录状态7天</label>
-            </div>
-            <button onclick="login()">登录</button>
-            <div class="switch-form">
-                <a href="/register.html">没有账号？立即注册</a>
-            </div>
+
             <div id="loginError" class="error-message"></div>
+
+            <div class="form-group">
+                <label>用户名</label>
+                <div class="input-wrapper">
+                    <i data-lucide="user"></i>
+                    <input type="text" id="loginUsername" class="search-input" placeholder="输入用户名">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>密码</label>
+                <div class="input-wrapper">
+                    <i data-lucide="lock"></i>
+                    <input type="password" id="loginPassword" class="search-input" placeholder="输入密码">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">
+                    <input type="checkbox" id="rememberMe" checked style="accent-color: var(--primary)"> 记住登录 7 天
+                </label>
+                <a href="#" style="font-size: 0.85rem; color: var(--primary); text-decoration: none;">忘记密码？</a>
+            </div>
+
+            <button onclick="login()" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;">
+                立即登录 <i data-lucide="log-in"></i>
+            </button>
+
+            <div style="text-align: center; margin-top: 24px; font-size: 0.9rem; color: var(--text-muted);">
+                还没有账号？ <a href="/register.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">立即注册</a>
+            </div>
         </div>
     </div>
 
     <script>
+        lucide.createIcons();
 
-        // 检查是否已登录
         function checkLoginStatus() {
             const token = localStorage.getItem('token');
             const expiry = localStorage.getItem('tokenExpiry');
-            
-            if (token && expiry) {
-                // 如果token未过期，直接跳转到首页
-                if (new Date().getTime() < parseInt(expiry)) {
-                    window.location.href = '/';
-                    return;
-                }
+            if (token && expiry && new Date().getTime() < parseInt(expiry)) {
+                window.location.href = '/';
             }
         }
 
-        // 设置token和过期时间
         function setTokenWithExpiry(token, username) {
-            const expiry = new Date().getTime() + (7 * 24 * 60 * 60 * 1000); // 7天
+            const expiry = new Date().getTime() + (7 * 24 * 60 * 60 * 1000);
             localStorage.setItem('token', token);
             localStorage.setItem('username', username);
             localStorage.setItem('tokenExpiry', expiry.toString());
@@ -124,30 +153,34 @@
             try {
                 const response = await fetch('/api/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password }),
                 });
 
                 const data = await response.json();
                 if (response.ok) {
                     if (rememberMe) {
-                        // 设置token和过期时间
                         setTokenWithExpiry(data.token, username);
                     } else {
-                        // 仅在当前会话中保存
                         localStorage.setItem('token', data.token);
                         localStorage.setItem('username', username);
                     }
                     window.location.href = '/';
                 } else {
                     errorElement.style.display = 'block';
-                    errorElement.textContent = data.message || '登录失败';
+                    errorElement.textContent = data.message || '用户名或密码错误';
                 }
             } catch (error) {
                 errorElement.style.display = 'block';
-                errorElement.textContent = '服务器错误，请稍后重试';
+                errorElement.textContent = '服务器连接超时，请重试';
+            }
+        }
+
+        window.onload = checkLoginStatus;
+    </script>
+</body>
+</html>
+ment.textContent = '服务器错误，请稍后重试';
             }
         }
 
