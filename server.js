@@ -602,6 +602,33 @@ app.delete('/api/articles/:id', async (req, res) => {
                 message: '无权删除此文章' });
         }
 
+        // 删除关联的本地封面图
+        if (article.coverUrl && article.coverUrl.startsWith('/images/articles/')) {
+            const coverPath = path.join(__dirname, 'public', article.coverUrl);
+            if (fs.existsSync(coverPath)) {
+                try {
+                    fs.unlinkSync(coverPath);
+                    console.log(`删除了关联的封面图: ${coverPath}`);
+                } catch (err) {
+                    console.error('删除封面图失败:', err);
+                }
+            }
+        }
+
+        // 删除关联的 HTML 文件 (如果是 inject 或 iframe 模式)
+        if (article.displayMode && article.displayMode !== 'markdown' && article.content) {
+            const fileName = path.basename(article.content);
+            const htmlPath = path.join(__dirname, 'public', 'uploads', fileName);
+            if (fs.existsSync(htmlPath)) {
+                try {
+                    fs.unlinkSync(htmlPath);
+                    console.log(`删除了关联的HTML文件: ${htmlPath}`);
+                } catch (err) {
+                    console.error('删除HTML文件失败:', err);
+                }
+            }
+        }
+
         // 删除文章
         await article.destroy();
 
