@@ -247,7 +247,7 @@
                             <input type="radio" name="displayMode" value="markdown" checked> Markdown 渲染
                         </label>
                         <label class="radio-item">
-                            <input type="radio" name="displayMode" value="html"> HTML 注入 (适合小游戏)
+                            <input type="radio" name="displayMode" value="inject"> HTML 注入 (适合小游戏)
                         </label>
                     </div>
                 </div>
@@ -348,34 +348,55 @@
                     }
                 }
 
-                const articleData = {
-                    title: document.getElementById('title').value,
-                    category: document.getElementById('category').value,
-                    coverUrl: coverUrl,
-                    content: document.getElementById('content').value,
-                    displayMode: document.querySelector('input[name="displayMode"]:checked').value
+                const submitArticle = async (forceSave = false) => {
+                    const articleData = {
+                        title: document.getElementById('title').value,
+                        category: document.getElementById('category').value,
+                        coverUrl: coverUrl,
+                        content: document.getElementById('content').value,
+                        displayMode: document.querySelector('input[name="displayMode"]:checked').value,
+                        forceSave: forceSave
+                    };
+
+                    const url = articleId ? `/api/articles/${articleId}` : '/api/articles';
+                    const method = articleId ? 'PUT' : 'POST';
+
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(articleData)
+                    });
+
+                    if (response.ok) {
+                        window.location.href = 'articles.html';
+                    } else {
+                        const res = await response.json();
+                        
+                        if (res.errorCode === 'DOWNLOAD_FAILED') {
+                            if (confirm('无法下载外部图片（链接可能无效或响应超时），是否使用默认图片继续发布？')) {
+                                // 用户选择使用默认图片
+                                coverUrl = ''; // 清空 URL，后端会根据分类随机分配或前端指定
+                                // 也可以在这里指定一个默认图片
+                                // coverUrl = '/images/articles/article1.jpg';
+                                return submitArticle(true); // 递归调用，设置 forceSave 为 true
+                            } else {
+                                // 用户选择返回修改
+                                submitBtn.disabled = false;
+                                submitText.textContent = originalText;
+                                return;
+                            }
+                        }
+
+                        alert('保存失败: ' + res.message);
+                        submitBtn.disabled = false;
+                        submitText.textContent = originalText;
+                    }
                 };
 
-                const url = articleId ? `/api/articles/${articleId}` : '/api/articles';
-                const method = articleId ? 'PUT' : 'POST';
-
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(articleData)
-                });
-
-                if (response.ok) {
-                    window.location.href = 'articles.html';
-                } else {
-                    const res = await response.json();
-                    alert('保存失败: ' + res.message);
-                    submitBtn.disabled = false;
-                    submitText.textContent = originalText;
-                }
+                await submitArticle();
             } catch (err) {
                 console.error(err);
                 alert(err.message || '提交出错，请检查网络');

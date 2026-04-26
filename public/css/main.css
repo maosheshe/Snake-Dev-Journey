@@ -56,11 +56,17 @@ body::before {
     width: 100%;
     height: 100%;
     background-image: 
-        radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
-        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+        radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 60%),
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
     background-size: 100% 100%, 40px 40px, 40px 40px;
     z-index: -1;
+    animation: backgroundPulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes backgroundPulse {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(1.1); opacity: 1; }
 }
 
 /* 布局容器 */
@@ -168,10 +174,19 @@ body::before {
 }
 
 .hero h1 {
-    font-size: 4rem;
+    font-size: 4.5rem;
     font-weight: 800;
     margin-bottom: 24px;
-    letter-spacing: -1px;
+    letter-spacing: -2px;
+    background: linear-gradient(to right, #fff 20%, var(--primary) 40%, var(--secondary) 60%, #fff 80%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 8s linear infinite;
+}
+
+@keyframes shine {
+    to { background-position: 200% center; }
 }
 
 .hero p {
@@ -201,9 +216,9 @@ body::before {
 }
 
 .article-card:hover {
-    transform: translateY(-10px) scale(1.02);
-    border-color: rgba(255, 255, 255, 0.2);
-    box-shadow: var(--shadow-main);
+    transform: translateY(-12px) scale(1.02);
+    border-color: var(--primary);
+    box-shadow: 0 20px 40px -10px rgba(16, 185, 129, 0.2);
 }
 
 .article-card::after {
@@ -392,4 +407,60 @@ body::before {
 
 .fade-in {
     animation: fadeIn 0.6s ease forwards;
+}
+
+/* 蛇蛇加载器 */
+.snake-loader-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 0;
+    width: 100%;
+}
+
+.snake-loader {
+    width: 60px;
+    height: 60px;
+    position: relative;
+}
+
+.snake-loader::before,
+.snake-loader::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: var(--primary);
+    filter: drop-shadow(0 0 10px var(--primary-glow));
+}
+
+.snake-loader::before {
+    animation: snakeSpin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.snake-loader::after {
+    width: 70%;
+    height: 70%;
+    top: 15%;
+    left: 15%;
+    border-top-color: var(--secondary);
+    animation: snakeSpin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite reverse;
+}
+
+.loader-text {
+    margin-top: 20px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+@keyframes snakeSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

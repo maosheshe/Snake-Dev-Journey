@@ -29,7 +29,7 @@
 
     <main class="container">
         <section class="hero fade-in">
-            <h1>探索<span style="color: var(--primary)">代码</span>的无限可能</h1>
+            <h1>探索代码的无限可能</h1>
             <p>专注于 Fullstack 开发、AI 技术集成与极客生活分享。在这里，我们一起进化。</p>
             <div style="display: flex; justify-content: center; gap: 16px;">
                 <a href="#articleGrid" class="btn btn-primary">开始阅读 <i data-lucide="arrow-down"></i></a>
@@ -147,6 +147,15 @@
 
         async function loadArticles(page = 1) {
             try {
+                const articleGrid = document.getElementById('articleGrid');
+                // 显示蛇形加载器
+                articleGrid.innerHTML = `
+                    <div class="snake-loader-container" style="grid-column: 1/-1;">
+                        <div class="snake-loader"></div>
+                        <div class="loader-text">探寻代码之旅...</div>
+                    </div>
+                `;
+
                 if (!checkTokenExpiry()) return;
 
                 const searchParams = new URLSearchParams({ page, pageSize });
@@ -157,7 +166,6 @@
 
                 const response = await fetch(`/api/articles?${searchParams.toString()}`);
                 const data = await response.json();
-                const articleGrid = document.getElementById('articleGrid');
                 
                 if (!data.data.articles || data.data.articles.length === 0) {
                     articleGrid.innerHTML = `

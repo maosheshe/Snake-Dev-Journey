@@ -22,10 +22,14 @@
 
         .article-layout {
             display: grid;
-            grid-template-columns: 1fr 280px;
+            grid-template-columns: 280px 1fr;
             gap: 40px;
             margin-top: 120px;
             padding-bottom: 80px;
+        }
+
+        .article-layout.no-sidebar {
+            grid-template-columns: 1fr;
         }
 
         .article-body {
@@ -186,6 +190,15 @@
     </header>
 
     <main class="container article-layout">
+        <aside class="sidebar">
+            <div class="toc-card">
+                <h3 class="toc-title"><i data-lucide="list"></i> 目录</h3>
+                <div id="tocList" class="toc-list">
+                    <!-- 目录将动态填充 -->
+                </div>
+            </div>
+        </aside>
+
         <div class="article-body fade-in">
             <article>
                 <header>
@@ -211,15 +224,6 @@
                 </div>
             </article>
         </div>
-
-        <aside class="sidebar">
-            <div class="toc-card">
-                <h3 class="toc-title"><i data-lucide="list"></i> 目录</h3>
-                <div id="tocList" class="toc-list">
-                    <!-- 目录将动态填充 -->
-                </div>
-            </div>
-        </aside>
     </main>
 
     <footer style="padding: 40px 0; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2); margin-top: 80px;">
@@ -358,6 +362,7 @@
             
             if (headings.length === 0) {
                 document.querySelector('.sidebar').style.display = 'none';
+                document.querySelector('.article-layout').classList.add('no-sidebar');
                 return;
             }
 
