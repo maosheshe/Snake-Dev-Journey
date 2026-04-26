@@ -84,6 +84,77 @@
             resize: vertical;
         }
 
+        /* 修复下拉菜单在某些浏览器下的样式 */
+        select.form-control option {
+            background-color: #1a1a1a;
+            color: var(--text-main);
+        }
+
+        .upload-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .upload-wrapper .form-control {
+            flex: 1;
+            width: auto; /* 覆盖全局的 100% */
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .btn-upload {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-glass);
+            color: var(--text-main);
+            white-space: nowrap;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .btn-upload:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        #coverPreview {
+            width: 100%;
+            height: 180px;
+            border-radius: var(--radius-md);
+            border: 2px dashed var(--border-glass);
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: rgba(0,0,0,0.3);
+            transition: var(--transition);
+        }
+
+        #coverPreview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
         .editor-footer {
             margin-top: 40px;
             display: flex;
@@ -152,8 +223,20 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">封面图 URL (可选)</label>
-                        <input type="text" id="cover" class="form-control" placeholder="https://example.com/image.jpg">
+                        <label class="form-label">封面图 (上传或填写 URL)</label>
+                        <div class="upload-wrapper">
+                            <input type="text" id="cover" class="form-control" placeholder="输入图片 URL 或点击上传">
+                            <div class="file-input-wrapper">
+                                <button type="button" class="btn btn-upload">
+                                    <i data-lucide="image-plus" style="width: 18px; height: 18px;"></i>
+                                    <span>本地上传</span>
+                                </button>
+                                <input type="file" id="coverFile" accept="image/*" onchange="previewImage(this)">
+                            </div>
+                        </div>
+                        <div id="coverPreview">
+                            <span style="color: var(--text-dim); font-size: 0.8rem;">预览图</span>
+                        </div>
                     </div>
                 </div>
 
@@ -197,6 +280,17 @@
             loadArticle();
         }
 
+        function previewImage(input) {
+            const preview = document.getElementById('coverPreview');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}">`;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
         async function loadArticle() {
             try {
                 const response = await fetch(`/api/articles/${articleId}`);
@@ -205,7 +299,10 @@
                     const article = data.data.article;
                     document.getElementById('title').value = article.title;
                     document.getElementById('category').value = article.category;
-                    document.getElementById('cover').value = article.cover || '';
+                    document.getElementById('cover').value = article.coverUrl || '';
+                    if (article.coverUrl) {
+                        document.getElementById('coverPreview').innerHTML = `<img src="${article.coverUrl}">`;
+                    }
                     document.getElementById('content').value = article.content;
                     const radio = document.querySelector(`input[name="displayMode"][value="${article.displayMode || 'markdown'}"]`);
                     if (radio) radio.checked = true;
@@ -218,18 +315,47 @@
         document.getElementById('articleForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const originalText = submitText.textContent;
+            
             submitBtn.disabled = true;
+            submitText.textContent = '处理中...';
 
-            const articleData = {
-                title: document.getElementById('title').value,
-                category: document.getElementById('category').value,
-                cover: document.getElementById('cover').value,
-                content: document.getElementById('content').value,
-                displayMode: document.querySelector('input[name="displayMode"]:checked').value
-            };
+            let coverUrl = document.getElementById('cover').value;
+            const coverFile = document.getElementById('coverFile').files[0];
 
             try {
                 const token = localStorage.getItem('token');
+
+                // 如果有新上传的文件，先上传
+                if (coverFile) {
+                    const formData = new FormData();
+                    formData.append('coverFile', coverFile);
+                    
+                    const uploadRes = await fetch('/api/upload-cover', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+                    
+                    const uploadData = await uploadRes.json();
+                    if (uploadData.status) {
+                        coverUrl = uploadData.data.url;
+                    } else {
+                        throw new Error('封面上传失败: ' + uploadData.message);
+                    }
+                }
+
+                const articleData = {
+                    title: document.getElementById('title').value,
+                    category: document.getElementById('category').value,
+                    coverUrl: coverUrl,
+                    content: document.getElementById('content').value,
+                    displayMode: document.querySelector('input[name="displayMode"]:checked').value
+                };
+
                 const url = articleId ? `/api/articles/${articleId}` : '/api/articles';
                 const method = articleId ? 'PUT' : 'POST';
 
@@ -248,11 +374,13 @@
                     const res = await response.json();
                     alert('保存失败: ' + res.message);
                     submitBtn.disabled = false;
+                    submitText.textContent = originalText;
                 }
             } catch (err) {
                 console.error(err);
-                alert('提交出错，请检查网络');
+                alert(err.message || '提交出错，请检查网络');
                 submitBtn.disabled = false;
+                submitText.textContent = originalText;
             }
         });
 

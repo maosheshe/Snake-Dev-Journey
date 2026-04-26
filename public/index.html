@@ -59,7 +59,7 @@
 
     <script>
         let currentPage = 1;
-        const pageSize = 10;
+        const pageSize = 12;
         let searchKeyword = '';
 
         // 处理滚动效果
@@ -173,10 +173,12 @@
                     return;
                 }
 
-                articleGrid.innerHTML = data.data.articles.map((article, index) => `
+                articleGrid.innerHTML = data.data.articles.map((article, index) => {
+                    const coverSrc = article.coverUrl || `/images/articles/article${(index % 5) + 1}.jpg`;
+                    return `
                     <article class="article-card fade-in" style="animation-delay: ${index * 0.1}s">
                         <a href="/article.html?id=${article.id}" onclick="openArticle(event, '${article.id}')" style="text-decoration: none; color: inherit;">
-                            <img src="/images/articles/article${(index % 5) + 1}.jpg" alt="${article.title}" class="card-image">
+                            <img src="${coverSrc}" alt="${article.title}" class="card-image">
                             <div class="card-body">
                                 <span class="card-category">${article.category || '未分类'}</span>
                                 <h2 class="card-title">${article.title}</h2>
@@ -191,7 +193,8 @@
                             </div>
                         </a>
                     </article>
-                `).join('');
+                `;
+                }).join('');
 
                 document.getElementById('pagination').style.display = 'flex';
                 renderPagination(data.data.pagination);

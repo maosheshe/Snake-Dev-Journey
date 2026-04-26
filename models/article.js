@@ -54,6 +54,10 @@ Article.init({
     displayMode: {
       type: DataTypes.ENUM('markdown', 'inject', 'iframe'),
       defaultValue: 'markdown'
+    },
+    coverUrl: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     sequelize,

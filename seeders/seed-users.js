@@ -6,11 +6,12 @@ module.exports = {
     const users = [];
     const password = await bcrypt.hash('123456', 10); // 所有测试用户使用相同的密码
 
-    // 生成100个用户
+    // 生成100个用户 (默认 free 角色)
     for (let i = 1; i <= 10; i++) {
       users.push({
         username: `testuser${i}`,
         password: password,
+        role: 'free',
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -21,12 +22,14 @@ module.exports = {
       {
         username: 'admin',
         password: await bcrypt.hash('admin123', 10),
+        role: 'admin',
         createdAt: new Date(),
         updatedAt: new Date()   
       },
       {
         username: 'editor',
         password: await bcrypt.hash('editor123', 10),
+        role: 'free',
         createdAt: new Date(),
         updatedAt: new Date()
       }

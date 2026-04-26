@@ -115,7 +115,7 @@ const promisePool = pool.promise();
  */
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'public/uploads/');
+        cb(null, path.join(__dirname, 'public', 'uploads'));
     },
     filename: function (req, file, cb) {
         // 生成唯一文件名：时间戳 + 随机数 + 原始文件名
@@ -177,7 +177,8 @@ app.post('/api/register', async (req, res) => {
         // 创建新用户记录
         await User.create({
             username,
-            password: hashedPassword
+            password: hashedPassword,
+            role: 'free'
         });
         console.log('用户数据插入成功');
 
@@ -203,7 +204,7 @@ console.log('开始登录流程，用户名:', username,password);
         // 查询用户信息
         const user = await User.findOne({
             where: { username },
-            attributes: ['id', 'username', 'password', 'createdAt', 'updatedAt']
+            attributes: ['id', 'username', 'password', 'role', 'createdAt', 'updatedAt']
         });
 
         // 用户不存在
@@ -219,7 +220,7 @@ console.log('开始登录流程，用户名:', username,password);
 
         // 生成JWT令牌，有效期7天
         const token = jwt.sign(
-            { userId: user.id, username: user.username },
+            { userId: user.id, username: user.username, role: user.role },
             process.env.JWT_SECRET || 'your-secret-key',
             { expiresIn: '7d' }
         );
@@ -240,7 +241,7 @@ console.log('开始登录流程，用户名:', username,password);
  * @returns {object} 包含状态、消息和文章ID
  */
 app.post('/api/articles', async (req, res) => {
-    const { title, content, category, tags, displayMode } = req.body;
+    const { title, content, category, tags, displayMode, coverUrl } = req.body;
     const token = req.headers.authorization?.split(' ')[1];
 console.log('token:',token);
     if (!token) {
@@ -261,6 +262,7 @@ console.log('token:',token);
             category,
             tags,
             displayMode: displayMode || 'markdown',
+            coverUrl,
             userId
         });
 
@@ -306,7 +308,7 @@ app.get('/api/articles', async (req, res) => {
     try {
         const query = req.query;
         const page = parseInt(query.page) || 1;
-        const pageSize = parseInt(query.pageSize) || 10;
+        const pageSize = parseInt(query.pageSize) || 12;
         const offset = (page - 1) * pageSize;
         
         const where = {};
@@ -419,7 +421,7 @@ app.get('/api/articles/:id', async (req, res) => {
  */
 app.put('/api/articles/:id', async (req, res) => {
     const articleId = req.params.id;
-    const { title, content, category, tags, displayMode } = req.body;
+    const { title, content, category, tags, displayMode, coverUrl } = req.body;
     const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
@@ -433,18 +435,20 @@ app.put('/api/articles/:id', async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const userId = decoded.userId;
 
-        // 检查文章是否存在且属于当前用户
-        const article = await Article.findOne({
-            where: {
-                id: articleId,
-                userId: userId
-            }
-        });
+        // 检查文章是否存在
+        const article = await Article.findByPk(articleId);
 
         if (!article) {
             return res.status(404).json({ 
                 status: false,
-                message: '文章不存在或无权修改' });
+                message: '文章不存在' });
+        }
+
+        // 只有作者本人或管理员可以修改
+        if (article.userId !== userId && decoded.role !== 'admin') {
+            return res.status(403).json({ 
+                status: false,
+                message: '无权修改此文章' });
         }
 
         // 更新文章内容
@@ -453,7 +457,8 @@ app.put('/api/articles/:id', async (req, res) => {
             content: content,
             category: category,
             tags: tags,
-            displayMode: displayMode
+            displayMode: displayMode,
+            coverUrl: coverUrl
         });
 
         res.json({ 
@@ -490,18 +495,20 @@ app.delete('/api/articles/:id', async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const userId = decoded.userId;
 
-        // 检查文章是否存在且属于当前用户
-        const article = await Article.findOne({
-            where: {
-                id: articleId,
-                userId: userId
-            }
-        });
+        // 检查文章是否存在
+        const article = await Article.findByPk(articleId);
 
         if (!article) {
             return res.status(404).json({ 
                 status: false,
-                message: '文章不存在或无权删除' });
+                message: '文章不存在' });
+        }
+
+        // 只有作者本人或管理员可以删除
+        if (article.userId !== userId && decoded.role !== 'admin') {
+            return res.status(403).json({ 
+                status: false,
+                message: '无权删除此文章' });
         }
 
         // 删除文章
@@ -583,6 +590,81 @@ app.post('/api/upload-html', (req, res, next) => {
         data: {
             filename: req.file.filename
         }
+    });
+});
+
+/**
+ * 文章封面上传配置
+ */
+const coverStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, path.join(__dirname, 'public', 'images', 'articles'));
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'cover-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const uploadCover = multer({
+    storage: coverStorage,
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (!allowedTypes.includes(ext)) {
+            return cb(new Error('只允许上传图片文件 (jpg, png, gif, webp)'), false);
+        }
+        cb(null, true);
+    },
+    limits: { fileSize: 2 * 1024 * 1024 } // 限制大小为2MB
+});
+
+/**
+ * 文章封面上传接口
+ * POST /api/upload-cover
+ */
+app.post('/api/upload-cover', (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ status: false, message: '未授权，请先登录' });
+    }
+    try {
+        jwt.verify(token, process.env.JWT_SECRET);
+        next();
+    } catch (err) {
+        return res.status(401).json({ status: false, message: '登录已过期' });
+    }
+}, uploadCover.single('coverFile'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ status: false, message: '请选择要上传的文件' });
+    }
+    res.json({
+        status: true,
+        message: '封面上传成功',
+        data: {
+            url: `/images/articles/${req.file.filename}`
+        }
+    });
+});
+
+/**
+ * 全局错误处理中间件
+ * 捕获所有未处理的错误并返回 JSON 响应
+ */
+app.use((err, req, res, next) => {
+    console.error('全局错误拦截:', err);
+    
+    // 处理 Multer 错误
+    if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ status: false, message: '文件大小不能超过 2MB' });
+        }
+        return res.status(400).json({ status: false, message: '文件上传错误: ' + err.message });
+    }
+    
+    res.status(err.status || 500).json({
+        status: false,
+        message: err.message || '服务器内部错误'
     });
 });
 
