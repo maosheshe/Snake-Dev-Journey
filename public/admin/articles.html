@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文章管理 - 蛇蛇的开发之旅</title>
     <link rel="stylesheet" href="/css/main.css">
+    <!-- Theme Management -->
+    <script src="/js/theme.js"></script>
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .admin-layout {
@@ -123,7 +126,10 @@
                 <i data-lucide="terminal"></i>
                 <span>蛇蛇</span>的开发之旅
             </a>
-            <div style="display: flex; gap: 20px;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <button id="themeToggle" class="btn" style="padding: 8px; border: 1px solid var(--border-glass); background: transparent; color: var(--text-main);" onclick="toggleTheme()" title="切换主题">
+                    <i data-lucide="sun"></i>
+                </button>
                 <a href="/" class="btn" style="border: 1px solid var(--border-glass)">
                     <i data-lucide="home"></i> 访问首页
                 </a>
