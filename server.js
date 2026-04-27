@@ -868,19 +868,25 @@ app.use((err, req, res, next) => {
 });
 
 // 启动服务器
-const startServer = (port) => {
-    app.listen(port, () => {
-        console.log(`🚀 服务器已成功启动！`);
-        console.log(`🔗 内部访问: http://localhost:${port}`);
-        console.log(`📡 Nginx 转发目标应指向此端口: 3001`);
-    }).on('error', (err) => {
+const { sequelize } = require('./models');
+
+const startServer = async (port) => {
+    try {
+        await sequelize.authenticate();
+        console.log('✅ 数据库连接成功');
+        app.listen(port, () => {
+            console.log(`🚀 服务器已成功启动！端口: ${port}`);
+        }).on('error', (err) => {
         if (err.code === 'EADDRINUSE') {
             console.error(`❌ 错误: 端口 ${port} 已被占用。`);
         } else {
             console.error('❌ 服务器启动发生异常:', err);
         }
-        process.exit(1);
-    });
+            console.error('❌ 服务器运行错误:', err.message);
+        });
+    } catch (error) {
+        console.error('❌ 数据库连接失败:', error.message);
+    }
 };
 
 const PORT = process.env.PORT || 3001;
