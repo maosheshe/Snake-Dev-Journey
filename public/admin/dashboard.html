@@ -98,7 +98,7 @@
                     <i data-lucide="user" style="width: 40px; height: 40px; color: white;"></i>
                 </div>
                 <h3 id="displayUsername" style="margin-bottom: 4px;">管理员</h3>
-                <p style="color: var(--text-dim); font-size: 0.8rem;">超级管理员权限</p>
+                <p id="displayRole" style="color: var(--text-dim); font-size: 0.8rem;">超级管理员权限</p>
             </div>
             <nav class="admin-nav">
                 <a href="dashboard.html" class="admin-nav-link active"><i data-lucide="layout-dashboard"></i> 仪表盘</a>
@@ -154,11 +154,26 @@
             }
             document.getElementById('displayUsername').textContent = username;
             document.getElementById('welcomeName').textContent = username;
+            
+            const role = localStorage.getItem('role');
+            const roleElement = document.getElementById('displayRole');
+            if (role === 'admin') {
+                roleElement.textContent = '超级管理员权限';
+                roleElement.style.color = 'var(--primary)';
+            } else {
+                roleElement.textContent = '博客作者权限';
+                roleElement.style.color = 'var(--text-dim)';
+            }
         }
 
         async function loadStats() {
             try {
-                const response = await fetch('/api/articles?pageSize=1000');
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/articles?pageSize=1000', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 const data = await response.json();
                 if (data.status) {
                     const articles = data.data.articles;

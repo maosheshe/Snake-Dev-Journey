@@ -311,6 +311,44 @@
                 console.error(err);
             }
         }
+        // 剪贴板粘贴图片支持
+        document.getElementById('content').addEventListener('paste', async (e) => {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (const item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    e.preventDefault(); // 阻止默认的粘贴文本行为
+                    const file = item.getAsFile();
+                    const formData = new FormData();
+                    formData.append('image', file);
+                    
+                    const textarea = e.target;
+                    const startPos = textarea.selectionStart;
+                    const endPos = textarea.selectionEnd;
+                    
+                    // 插入加载提示
+                    const placeholder = '\n![正在上传图片...](uploading)\n';
+                    textarea.value = textarea.value.substring(0, startPos) + placeholder + textarea.value.substring(endPos);
+                    
+                    try {
+                        const token = localStorage.getItem('token');
+                        const response = await fetch('/api/upload-image', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            body: formData
+                        });
+                        const data = await response.json();
+                        if (data.status) {
+                            const markdownImage = `\n![图片](${data.data.url})\n`;
+                            textarea.value = textarea.value.replace(placeholder, markdownImage);
+                        } else {
+                            textarea.value = textarea.value.replace(placeholder, '\n![图片上传失败](' + data.message + ')\n');
+                        }
+                    } catch (err) {
+                        textarea.value = textarea.value.replace(placeholder, '\n![图片上传出错]()\n');
+                    }
+                }
+            }
+        });
 
         document.getElementById('articleForm').addEventListener('submit', async (e) => {
             e.preventDefault();

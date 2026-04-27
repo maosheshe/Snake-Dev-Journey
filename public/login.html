@@ -165,6 +165,7 @@
                         localStorage.setItem('token', data.token);
                         localStorage.setItem('username', username);
                     }
+                    localStorage.setItem('role', data.role || 'free');
                     window.location.href = '/';
                 } else {
                     errorElement.style.display = 'block';

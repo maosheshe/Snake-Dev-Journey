@@ -143,7 +143,7 @@
 
         <section class="admin-content">
             <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                <h1 style="font-size: 2rem;">所有文章</h1>
+                <h1 id="adminPageTitle" style="font-size: 2rem;">所有文章</h1>
                 <a href="create-article.html" class="btn btn-primary">
                     <i data-lucide="plus"></i> 新增文章
                 </a>
@@ -183,8 +183,18 @@
         const pageSize = 12;
 
         async function loadArticles(page = 1) {
+            const role = localStorage.getItem('role');
+            if (role !== 'admin') {
+                document.getElementById('adminPageTitle').textContent = '我的文章';
+            }
+            
             try {
-                const response = await fetch(`/api/articles?page=${page}&pageSize=${pageSize}`);
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/articles?page=${page}&pageSize=${pageSize}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 const data = await response.json();
                 
                 const list = document.getElementById('articleList');

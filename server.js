@@ -76,7 +76,8 @@ const limiter = rateLimit({
 });
 
 // 配置基础中间件
-app.use(express.json({ limit: '10kb' })); // 解析JSON请求体，限制大小为10KB
+app.use(express.json({ limit: '50mb' })); // 解析JSON请求体，限制大小为50MB
+app.use(express.urlencoded({ limit: '50mb', extended: true })); // 同时增加 URL 编码限制
 app.use(express.static('public')); // 提供静态文件服务
 app.use(limiter); // 将速率限制应用在静态文件之后，防止加载资源时被拦截
 
@@ -137,7 +138,7 @@ const upload = multer({
         }
         cb(null, true);
     },
-    limits: { fileSize: 5 * 1024 * 1024 } // 限制大小为5MB
+    limits: { fileSize: 10 * 1024 * 1024 } // 限制大小为10MB
 });
 
 /**
@@ -228,7 +229,11 @@ console.log('开始登录流程，用户名:', username,password);
             { expiresIn: '7d' }
         );
 
-        res.json({ token });
+        res.json({ 
+            token,
+            role: user.role,
+            username: user.username
+        });
     } catch (error) {
         console.error('详细错误:', error.stack); // 输出堆栈信息
         res.status(500).json({ status: false, message: error.message }); // 返回具体错误
@@ -397,6 +402,23 @@ app.get('/api/articles', async (req, res) => {
             }
             if (query.content) {
                 where[Op.or].push({ content: { [Op.like]: `%${query.content}%` } });
+            }
+        }
+
+        // 权限过滤：如果是后台管理请求（携带有效 token）
+        const token = req.headers.authorization?.split(' ')[1];
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+                // 如果不是管理员，只能看自己的文章
+                if (decoded.role !== 'admin') {
+                    where.userId = decoded.userId;
+                    console.log(`用户 ${decoded.username} 正在查看自己的文章列表`);
+                } else {
+                    console.log(`管理员 ${decoded.username} 正在查看所有文章列表`);
+                }
+            } catch (err) {
+                // Token 无效或过期，不执行额外过滤（作为公开请求处理）
             }
         }
 
@@ -734,7 +756,7 @@ const uploadCover = multer({
         }
         cb(null, true);
     },
-    limits: { fileSize: 2 * 1024 * 1024 } // 限制大小为2MB
+    limits: { fileSize: 10 * 1024 * 1024 } // 限制大小为10MB
 });
 
 /**
@@ -766,16 +788,52 @@ app.post('/api/upload-cover', (req, res, next) => {
 });
 
 /**
+ * 通用图片上传接口 (用于编辑器内粘贴)
+ * POST /api/upload-image
+ */
+app.post('/api/upload-image', (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ status: false, message: '未授权，请先登录' });
+    }
+    try {
+        jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+        next();
+    } catch (err) {
+        return res.status(401).json({ status: false, message: '登录已过期' });
+    }
+}, uploadCover.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ status: false, message: '请选择要上传的文件' });
+    }
+    res.json({
+        status: true,
+        message: '图片上传成功',
+        data: {
+            url: `/images/articles/${req.file.filename}`
+        }
+    });
+});
+
+/**
  * 全局错误处理中间件
  * 捕获所有未处理的错误并返回 JSON 响应
  */
 app.use((err, req, res, next) => {
     console.error('全局错误拦截:', err);
     
+    // 处理 Payload Too Large 错误 (来自 express.json)
+    if (err.type === 'entity.too.large' || err.status === 413) {
+        return res.status(413).json({ 
+            status: false, 
+            message: '提交内容过大，请减小图片体积或分次提交' 
+        });
+    }
+
     // 处理 Multer 错误
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({ status: false, message: '文件大小不能超过 2MB' });
+            return res.status(400).json({ status: false, message: '文件大小不能超过限制' });
         }
         return res.status(400).json({ status: false, message: '文件上传错误: ' + err.message });
     }
