@@ -69,7 +69,7 @@
         .article-content {
             font-size: 1.15rem;
             line-height: 1.8;
-            color: #e2e8f0;
+            color: var(--text-main);
         }
 
         .article-content h1, .article-content h2, .article-content h3 {
@@ -140,23 +140,37 @@
             border-radius: var(--radius-md);
             overflow: hidden;
             border: 1px solid var(--border-glass);
-            background: #0f172a;
+            background: var(--bg-dark);
         }
 
         .code-header {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--bg-dark);
             padding: 8px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border-glass);
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .code-lang {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
+        pre {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            margin: 24px 0;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--text-main);
         }
 
         .copy-btn {

@@ -764,17 +764,30 @@ const uploadCover = multer({
  * POST /api/upload-cover
  */
 app.post('/api/upload-cover', (req, res, next) => {
+    console.log('收到封面上传请求');
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
+        console.log('封面上传失败: 未提供 token');
         return res.status(401).json({ status: false, message: '未授权，请先登录' });
     }
     try {
-        jwt.verify(token, process.env.JWT_SECRET);
+        jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
         next();
     } catch (err) {
+        console.log('封面上传失败: token 验证失败', err.message);
         return res.status(401).json({ status: false, message: '登录已过期' });
     }
-}, uploadCover.single('coverFile'), (req, res) => {
+}, (req, res, next) => {
+    // 增加一个额外的错误处理中间件来捕获 multer 错误
+    uploadCover.single('coverFile')(req, res, (err) => {
+        if (err) {
+            console.error('Multer 封面上传错误:', err);
+            return next(err);
+        }
+        next();
+    });
+}, (req, res) => {
+    console.log('封面上传成功:', req.file?.filename);
     if (!req.file) {
         return res.status(400).json({ status: false, message: '请选择要上传的文件' });
     }
@@ -792,6 +805,7 @@ app.post('/api/upload-cover', (req, res, next) => {
  * POST /api/upload-image
  */
 app.post('/api/upload-image', (req, res, next) => {
+    console.log('收到内容图片上传请求');
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
         return res.status(401).json({ status: false, message: '未授权，请先登录' });
@@ -802,7 +816,16 @@ app.post('/api/upload-image', (req, res, next) => {
     } catch (err) {
         return res.status(401).json({ status: false, message: '登录已过期' });
     }
-}, uploadCover.single('image'), (req, res) => {
+}, (req, res, next) => {
+    uploadCover.single('image')(req, res, (err) => {
+        if (err) {
+            console.error('Multer 内容图片上传错误:', err);
+            return next(err);
+        }
+        next();
+    });
+}, (req, res) => {
+    console.log('内容图片上传成功:', req.file?.filename);
     if (!req.file) {
         return res.status(400).json({ status: false, message: '请选择要上传的文件' });
     }

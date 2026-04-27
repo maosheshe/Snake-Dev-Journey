@@ -31,14 +31,14 @@
 
 /* 明亮模式变量覆盖 */
 [data-theme="light"] {
-    --bg-dark: #f1f5f9;
-    --bg-card: rgba(255, 255, 255, 0.8);
-    --bg-glass: rgba(255, 255, 255, 0.7);
-    --border-glass: rgba(0, 0, 0, 0.06);
-    --text-main: #0f172a;
-    --text-muted: #475569;
-    --text-dim: #64748b;
-    --shadow-main: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+    --bg-dark: #f8fafc;
+    --bg-card: rgba(255, 255, 255, 0.9);
+    --bg-glass: rgba(255, 255, 255, 0.8);
+    --border-glass: rgba(0, 0, 0, 0.08);
+    --text-main: #020617;
+    --text-muted: #334155;
+    --text-dim: #475569;
+    --shadow-main: 0 10px 30px -10px rgba(0, 0, 0, 0.12);
     --primary-glow: rgba(16, 185, 129, 0.15);
 }
 

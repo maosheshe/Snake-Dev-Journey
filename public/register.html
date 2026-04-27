@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>注册 - 蛇蛇的开发之旅</title>
     <link rel="stylesheet" href="/css/main.css">
+    <!-- Theme Management -->
+    <script src="/js/theme.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .auth-container {
@@ -25,6 +27,7 @@
             max-width: 400px;
             padding: 40px;
             box-shadow: var(--shadow-main);
+            color: var(--text-main);
         }
 
         .auth-header {
@@ -84,6 +87,11 @@
     </style>
 </head>
 <body>
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 100;">
+        <button id="themeToggle" class="btn" style="padding: 10px; border: 1px solid var(--border-glass); background: var(--bg-card); color: var(--text-main);" onclick="toggleTheme()" title="切换主题">
+            <i data-lucide="sun"></i>
+        </button>
+    </div>
     <div class="auth-container">
         <div class="auth-card fade-in">
             <div class="auth-header">

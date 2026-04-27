@@ -416,15 +416,29 @@
                     if (response.ok) {
                         window.location.href = 'articles.html';
                     } else {
-                        const res = await response.json();
-                        
-                        if (res.errorCode === 'DOWNLOAD_FAILED') {
-                            if (confirm('无法下载外部图片（链接可能无效或响应超时），是否使用默认图片继续发布？')) {
-                                // 用户选择使用默认图片
-                                coverUrl = ''; // 清空 URL，后端会根据分类随机分配或前端指定
-                                // 也可以在这里指定一个默认图片
-                                // coverUrl = '/images/articles/article1.jpg';
-                                return submitArticle(true); // 递归调用，设置 forceSave 为 true
+                        // 尝试解析 JSON，如果失败则可能是 Nginx 拦截导致的 HTML 页面
+                        try {
+                            const res = await response.json();
+                            
+                            if (res.errorCode === 'DOWNLOAD_FAILED') {
+                                if (confirm('无法下载外部图片（链接可能无效或响应超时），是否使用默认图片继续发布？')) {
+                                    // 用户选择使用默认图片
+                                    coverUrl = ''; // 清空 URL，后端会根据分类随机分配或前端指定
+                                    // 也可以在这里指定一个默认图片
+                                    // coverUrl = '/images/articles/article1.jpg';
+                                    return submitArticle(true); // 递归调用，设置 forceSave 为 true
+                                } else {
+                                    // 用户选择返回修改
+                                    submitBtn.disabled = false;
+                                    submitText.textContent = originalText;
+                                    return;
+                                }
+                            }
+
+                            alert('保存失败: ' + (res.message || '未知错误'));
+                        } catch (e) {
+                            if (response.status === 413) {
+                                alert('保存失败：内容或图片体积过大，超出了服务器限制。请尝试压缩图片或分段提交。');
                             } else {
                                 // 用户选择返回修改
                                 submitBtn.disabled = false;
@@ -433,7 +447,6 @@
                             }
                         }
 
-                        alert('保存失败: ' + res.message);
                         submitBtn.disabled = false;
                         submitText.textContent = originalText;
                     }
