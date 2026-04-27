@@ -869,21 +869,19 @@ app.use((err, req, res, next) => {
 
 // 启动服务器
 const startServer = (port) => {
-    try {
-        app.listen(port, () => {
-            console.log(`服务器运行在端口 ${port}`);
-        }).on('error', (err) => {
-            if (err.code === 'EADDRINUSE') {
-                console.log(`端口 ${port} 已被占用，尝试使用端口 ${port + 1}`);
-                startServer(port + 1);
-            } else {
-                console.error('服务器启动错误:', err);
-            }
-        });
-    } catch (error) {
-        console.error('服务器启动失败:', error);
-    }
+    app.listen(port, () => {
+        console.log(`🚀 服务器已成功启动！`);
+        console.log(`🔗 内部访问: http://localhost:${port}`);
+        console.log(`📡 Nginx 转发目标应指向此端口: 3001`);
+    }).on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            console.error(`❌ 错误: 端口 ${port} 已被占用。`);
+        } else {
+            console.error('❌ 服务器启动发生异常:', err);
+        }
+        process.exit(1);
+    });
 };
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 startServer(PORT);
