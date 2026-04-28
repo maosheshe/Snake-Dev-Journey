@@ -119,7 +119,7 @@ const promisePool = pool.promise();
  */
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, 'public', 'uploads'));
+        cb(null, path.join(__dirname, 'public', 'game'));
     },
     filename: function (req, file, cb) {
         // 生成唯一文件名：时间戳 + 随机数 + 原始文件名
@@ -242,62 +242,12 @@ console.log('开始登录流程，用户名:', username,password);
 
 /**
  * 处理封面 URL
- * 如果是外部链接，则下载到本地
+ * 仅返回原始 URL，不再执行本地化下载（由前端处理或直接使用外链）
  * @param {string} coverUrl - 封面 URL
- * @returns {Promise<object>} - { success: boolean, url: string }
+ * @returns {Promise<object>} - { success: true, url: string }
  */
 async function processCoverUrl(coverUrl) {
-    if (!coverUrl || typeof coverUrl !== 'string' || !coverUrl.startsWith('http')) {
-        return { success: true, url: coverUrl };
-    }
-
-    if (coverUrl.startsWith('/images/articles/')) {
-        return { success: true, url: coverUrl };
-    }
-
-    try {
-        const urlObj = new URL(coverUrl);
-        const extension = path.extname(urlObj.pathname) || '.jpg';
-        const filename = `downloaded-${Date.now()}-${Math.round(Math.random() * 1E9)}${extension}`;
-        const targetPath = path.join(__dirname, 'public', 'images', 'articles', filename);
-        
-        return new Promise((resolve) => {
-            const client = coverUrl.startsWith('https') ? https : http;
-            
-            const request = client.get(coverUrl, (res) => {
-                if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-                    const nextUrl = res.headers.location.startsWith('http') 
-                        ? res.headers.location 
-                        : new URL(res.headers.location, coverUrl).href;
-                    request.destroy();
-                    return resolve(processCoverUrl(nextUrl));
-                }
-
-                if (res.statusCode !== 200) {
-                    return resolve({ success: false, url: coverUrl });
-                }
-
-                const fileStream = fs.createWriteStream(targetPath);
-                res.pipe(fileStream);
-                fileStream.on('finish', () => {
-                    fileStream.close();
-                    resolve({ success: true, url: `/images/articles/${filename}` });
-                });
-                fileStream.on('error', () => {
-                    fs.unlink(targetPath, () => {});
-                    resolve({ success: false, url: coverUrl });
-                });
-            });
-
-            request.on('error', () => resolve({ success: false, url: coverUrl }));
-            request.setTimeout(10000, () => {
-                request.destroy();
-                resolve({ success: false, url: coverUrl });
-            });
-        });
-    } catch (e) {
-        return { success: false, url: coverUrl };
-    }
+    return { success: true, url: coverUrl };
 }
 
 /**
@@ -309,7 +259,7 @@ async function processCoverUrl(coverUrl) {
  * @returns {object} 包含状态、消息和文章ID
  */
 app.post('/api/articles', async (req, res) => {
-        const { title, content, category, tags, displayMode, coverUrl, forceSave } = req.body;
+        const { title, content, summary, category, tags, displayMode, coverUrl, forceSave } = req.body;
         const token = req.headers.authorization?.split(' ')[1];
     console.log('token:',token);
         if (!token) {
@@ -342,6 +292,7 @@ app.post('/api/articles', async (req, res) => {
         const article = await Article.create({
             title,
             content,
+            summary,
             category,
             tags,
             displayMode: displayMode || 'markdown',
@@ -403,6 +354,10 @@ app.get('/api/articles', async (req, res) => {
             if (query.content) {
                 where[Op.or].push({ content: { [Op.like]: `%${query.content}%` } });
             }
+        }
+
+        if (query.category) {
+            where.category = query.category;
         }
 
         // 权限过滤：如果是后台管理请求（携带有效 token）
@@ -521,7 +476,7 @@ app.get('/api/articles/:id', async (req, res) => {
  */
 app.put('/api/articles/:id', async (req, res) => {
     const articleId = req.params.id;
-        const { title, content, category, tags, displayMode, coverUrl, forceSave } = req.body;
+        const { title, content, summary, category, tags, displayMode, coverUrl, forceSave } = req.body;
         const token = req.headers.authorization?.split(' ')[1];
     
         if (!token) {
@@ -568,6 +523,7 @@ app.put('/api/articles/:id', async (req, res) => {
         await article.update({
             title: title,
             content: content,
+            summary: summary,
             category: category,
             tags: tags,
             displayMode: displayMode,
@@ -637,18 +593,25 @@ app.delete('/api/articles/:id', async (req, res) => {
             }
         }
 
-        // 删除关联的 HTML 文件 (如果是 inject 或 iframe 模式)
-        if (article.displayMode && article.displayMode !== 'markdown' && article.content) {
+        // 删除关联的 HTML 文件 (针对分类为“游戏”的内容)
+        if (article.category === '游戏' && article.content) {
             const fileName = path.basename(article.content);
-            const htmlPath = path.join(__dirname, 'public', 'uploads', fileName);
-            if (fs.existsSync(htmlPath)) {
-                try {
-                    fs.unlinkSync(htmlPath);
-                    console.log(`删除了关联的HTML文件: ${htmlPath}`);
-                } catch (err) {
-                    console.error('删除HTML文件失败:', err);
+            const gamePath = path.join(__dirname, 'public', 'game', fileName);
+            const uploadsPath = path.join(__dirname, 'public', 'uploads', fileName);
+            
+            // 检查 game 目录和旧的 uploads 目录
+            const possiblePaths = [gamePath, uploadsPath];
+            
+            possiblePaths.forEach(htmlPath => {
+                if (fs.existsSync(htmlPath)) {
+                    try {
+                        fs.unlinkSync(htmlPath);
+                        console.log(`删除了关联的HTML文件: ${htmlPath}`);
+                    } catch (err) {
+                        console.error(`删除HTML文件失败 (${htmlPath}):`, err);
+                    }
                 }
-            }
+            });
         }
 
         // 删除文章

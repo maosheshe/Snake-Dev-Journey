@@ -52,11 +52,15 @@ Article.init({
       defaultValue: 0
     },
     displayMode: {
-      type: DataTypes.ENUM('markdown', 'inject', 'iframe'),
+      type: DataTypes.ENUM('markdown', 'inject', 'iframe', 'direct'),
       defaultValue: 'markdown'
     },
     coverUrl: {
       type: DataTypes.STRING,
+      allowNull: true
+    },
+    summary: {
+      type: DataTypes.TEXT,
       allowNull: true
     }
   }, {

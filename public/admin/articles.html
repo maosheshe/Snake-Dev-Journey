@@ -77,15 +77,23 @@
         }
 
         .badge {
-            padding: 4px 10px;
+            padding: 4px 12px;
             border-radius: 4px;
             font-size: 0.75rem;
             font-weight: 600;
+            white-space: nowrap;
+            display: inline-block;
         }
 
         .badge-tech { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
         .badge-game { background: rgba(16, 185, 129, 0.1); color: #10b981; }
         .badge-none { background: rgba(148, 163, 184, 0.1); color: #94a3b8; }
+
+        /* 为分类列设置固定宽度 */
+        .admin-table th:nth-child(2),
+        .admin-table td:nth-child(2) {
+            width: 120px;
+        }
 
         .action-btns {
             display: flex;
@@ -143,16 +151,22 @@
                 <a href="dashboard.html" class="admin-nav-link"><i data-lucide="layout-dashboard"></i> 仪表盘</a>
                 <a href="articles.html" class="admin-nav-link active"><i data-lucide="file-text"></i> 文章管理</a>
                 <a href="create-article.html" class="admin-nav-link"><i data-lucide="plus-circle"></i> 发布文章</a>
+                <a href="create-game.html" class="admin-nav-link"><i data-lucide="gamepad-2"></i> 发表小游戏</a>
                 <a href="javascript:void(0)" onclick="logout()" class="admin-nav-link" style="margin-top: 20px; color: #ef4444;"><i data-lucide="log-out"></i> 安全退出</a>
             </nav>
         </aside>
 
         <section class="admin-content">
             <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                <h1 id="adminPageTitle" style="font-size: 2rem;">所有文章</h1>
-                <a href="create-article.html" class="btn btn-primary">
-                    <i data-lucide="plus"></i> 新增文章
-                </a>
+                <h1 id="adminPageTitle" style="font-size: 2rem;">所有内容</h1>
+                <div style="display: flex; gap: 12px;">
+                    <a href="create-article.html" class="btn" style="border: 1px solid var(--border-glass)">
+                        <i data-lucide="plus"></i> 新增文章
+                    </a>
+                    <a href="create-game.html" class="btn btn-primary">
+                        <i data-lucide="gamepad-2"></i> 发表小游戏
+                    </a>
+                </div>
             </div>
 
             <div class="article-table-card fade-in">
@@ -225,7 +239,7 @@
                             <td>
                                 <div class="action-btns">
                                     <a href="article-detail.html?id=${article.id}" class="action-btn" title="详情"><i data-lucide="external-link" style="width:16px;"></i></a>
-                                    <a href="create-article.html?id=${article.id}" class="action-btn" title="编辑"><i data-lucide="edit-3" style="width:16px;"></i></a>
+                                    <a href="${article.category === '游戏' ? 'create-game.html' : 'create-article.html'}?id=${article.id}" class="action-btn" title="编辑"><i data-lucide="edit-3" style="width:16px;"></i></a>
                                     <button onclick="deleteArticle(${article.id})" class="action-btn delete" title="删除"><i data-lucide="trash-2" style="width:16px;"></i></button>
                                 </div>
                             </td>

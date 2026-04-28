@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>发布/编辑文章 - 蛇蛇的开发之旅</title>
+    <title>发布/编辑小游戏 - 蛇蛇的开发之旅</title>
     <link rel="stylesheet" href="/css/main.css">
     <!-- Theme Management -->
     <script src="/js/theme.js"></script>
@@ -79,19 +79,6 @@
             box-shadow: 0 0 0 4px var(--primary-glow);
         }
 
-        textarea.form-control {
-            min-height: 400px;
-            font-family: 'JetBrains Mono', monospace;
-            line-height: 1.6;
-            resize: vertical;
-        }
-
-        /* 修复下拉菜单在某些浏览器下的样式 */
-        select.form-control option {
-            background-color: #1a1a1a;
-            color: var(--text-main);
-        }
-
         .upload-wrapper {
             display: flex;
             gap: 12px;
@@ -100,7 +87,7 @@
 
         .upload-wrapper .form-control {
             flex: 1;
-            width: auto; /* 覆盖全局的 100% */
+            width: auto;
         }
 
         .file-input-wrapper {
@@ -178,6 +165,13 @@
             gap: 8px;
             cursor: pointer;
         }
+
+        .game-file-info {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: var(--primary);
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -203,30 +197,42 @@
             <nav class="admin-nav" style="display: flex; flex-direction: column; gap: 10px;">
                 <a href="dashboard.html" class="admin-nav-link"><i data-lucide="layout-dashboard"></i> 仪表盘</a>
                 <a href="articles.html" class="admin-nav-link"><i data-lucide="file-text"></i> 文章管理</a>
-                <a href="create-article.html" class="admin-nav-link active"><i data-lucide="plus-circle"></i> 发布文章</a>
-                <a href="create-game.html" class="admin-nav-link"><i data-lucide="gamepad-2"></i> 发表小游戏</a>
+                <a href="create-article.html" class="admin-nav-link"><i data-lucide="plus-circle"></i> 发布文章</a>
+                <a href="create-game.html" class="admin-nav-link active"><i data-lucide="gamepad-2"></i> 发表小游戏</a>
                 <a href="javascript:void(0)" onclick="logout()" class="admin-nav-link" style="margin-top: 20px; color: #ef4444;"><i data-lucide="log-out"></i> 安全退出</a>
             </nav>
         </aside>
 
         <section class="admin-content">
-            <h1 id="pageTitle" style="margin-bottom: 30px;">发布新文章</h1>
+            <h1 id="pageTitle" style="margin-bottom: 30px;">发表新小游戏</h1>
 
-            <form id="articleForm" class="editor-card fade-in">
+            <form id="gameForm" class="editor-card fade-in">
                 <div class="form-group">
-                    <label class="form-label">文章标题</label>
-                    <input type="text" id="title" class="form-control" placeholder="输入引人注目的标题..." required>
+                    <label class="form-label">游戏名称</label>
+                    <input type="text" id="title" class="form-control" placeholder="输入游戏名称..." required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">游戏简介</label>
+                    <textarea id="summary" class="form-control" style="min-height: 100px;" placeholder="简单介绍一下你的游戏内容..." required></textarea>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
                     <div class="form-group">
-                        <label class="form-label">分类</label>
-                        <select id="category" class="form-control">
-                            <option value="技术">技术</option>
-                            <option value="游戏">游戏</option>
-                            <option value="生活">生活</option>
-                            <option value="随笔">随笔</option>
-                        </select>
+                        <label class="form-label">游戏文件 (.html)</label>
+                        <div class="upload-wrapper">
+                            <input type="text" id="gameFileUrl" class="form-control" placeholder="上传游戏 HTML 文件" readonly required>
+                            <div class="file-input-wrapper">
+                                <button type="button" class="btn btn-upload">
+                                    <i data-lucide="file-up" style="width: 18px; height: 18px;"></i>
+                                    <span>上传文件</span>
+                                </button>
+                                <input type="file" id="gameFileInput" accept=".html" onchange="uploadGameFile(this)">
+                            </div>
+                        </div>
+                        <div id="gameFileInfo" class="game-file-info">
+                            <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i> 文件已就绪
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">封面图 (上传或填写 URL)</label>
@@ -246,27 +252,12 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">显示模式</label>
-                    <div class="radio-group">
-                        <label class="radio-item">
-                            <input type="radio" name="displayMode" value="markdown" checked> Markdown 渲染
-                        </label>
-                        <label class="radio-item">
-                            <input type="radio" name="displayMode" value="inject"> HTML 注入 (适合小游戏)
-                        </label>
-                    </div>
-                </div>
 
-                <div class="form-group">
-                    <label class="form-label">内容</label>
-                    <textarea id="content" class="form-control" placeholder="在此处开始你的创作...支持 Markdown 语法。" required></textarea>
-                </div>
 
                 <div class="editor-footer">
                     <button type="button" onclick="history.back()" class="btn" style="border: 1px solid var(--border-glass)">取消</button>
                     <button type="submit" class="btn btn-primary" id="submitBtn">
-                        <i data-lucide="send"></i> <span id="submitText">发布文章</span>
+                        <i data-lucide="zap"></i> <span id="submitText">发布小游戏</span>
                     </button>
                 </div>
             </form>
@@ -277,13 +268,49 @@
         lucide.createIcons();
 
         const urlParams = new URLSearchParams(window.location.search);
-        const articleId = urlParams.get('id');
+        const gameId = urlParams.get('id');
 
-        // 如果有 ID，说明是编辑模式
-        if (articleId) {
-            document.getElementById('pageTitle').textContent = '编辑文章';
+        if (gameId) {
+            document.getElementById('pageTitle').textContent = '编辑小游戏';
             document.getElementById('submitText').textContent = '保存修改';
-            loadArticle();
+            loadGame();
+        }
+
+        async function uploadGameFile(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const gameUrlInput = document.getElementById('gameFileUrl');
+                const fileInfo = document.getElementById('gameFileInfo');
+                
+                try {
+                    gameUrlInput.value = '正在上传...';
+                    
+                    const formData = new FormData();
+                    formData.append('htmlFile', file);
+                    
+                    const token = localStorage.getItem('token');
+                    const response = await fetch('/api/upload-html', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    if (data.status) {
+                        gameUrlInput.value = data.data.filename;
+                        fileInfo.style.display = 'flex';
+                        fileInfo.innerHTML = `<i data-lucide="check-circle" style="width: 14px; height: 14px; margin-right: 4px;"></i> 文件已上传: ${data.data.filename}`;
+                        lucide.createIcons();
+                    } else {
+                        alert('上传失败: ' + data.message);
+                        gameUrlInput.value = '';
+                    }
+                } catch (err) {
+                    console.error('上传出错:', err);
+                    alert('上传过程中发生错误');
+                    gameUrlInput.value = '';
+                }
+            }
         }
 
         async function previewImage(input) {
@@ -293,16 +320,14 @@
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 
-                // 1. 立即显示本地预览
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     preview.innerHTML = `<img src="${e.target.result}">`;
                 }
                 reader.readAsDataURL(file);
 
-                // 2. 立即上传并获取 URL (改变思路：先上传，得到的地址填入 URL 字段)
                 try {
-                    preview.innerHTML = `<div class="snake-loader" style="width:30px;height:30px;border-width:2px;"></div><span style="margin-top:10px;font-size:0.8rem;">正在上传...</span>`;
+                    preview.innerHTML = `<div class="snake-loader" style="width:30px;height:30px;border-width:2px;"></div>`;
                     
                     const formData = new FormData();
                     formData.append('coverFile', file);
@@ -324,13 +349,11 @@
                     }
                 } catch (err) {
                     console.error('上传出错:', err);
-                    alert('图片上传发生错误');
                     preview.innerHTML = `<span style="color: #ef4444; font-size: 0.8rem;">上传错误</span>`;
                 }
             }
         }
 
-        // 监听 URL 输入框变化以更新预览
         document.getElementById('cover').addEventListener('input', (e) => {
             const url = e.target.value.trim();
             const preview = document.getElementById('coverPreview');
@@ -341,66 +364,31 @@
             }
         });
 
-        async function loadArticle() {
+        async function loadGame() {
             try {
-                const response = await fetch(`/api/articles/${articleId}`);
+                const response = await fetch(`/api/articles/${gameId}`);
                 const data = await response.json();
                 if (data.status) {
                     const article = data.data.article;
                     document.getElementById('title').value = article.title;
-                    document.getElementById('category').value = article.category;
+                    document.getElementById('summary').value = article.content; // 小游戏的 content 存的是文件名
+                    document.getElementById('gameFileUrl').value = article.content;
                     document.getElementById('cover').value = article.coverUrl || '';
                     if (article.coverUrl) {
                         document.getElementById('coverPreview').innerHTML = `<img src="${article.coverUrl}">`;
                     }
-                    document.getElementById('content').value = article.content;
-                    const radio = document.querySelector(`input[name="displayMode"][value="${article.displayMode || 'markdown'}"]`);
-                    if (radio) radio.checked = true;
+
+                    
+                    document.getElementById('gameFileInfo').style.display = 'flex';
+                    document.getElementById('gameFileInfo').innerHTML = `<i data-lucide="check-circle" style="width: 14px; height: 14px; margin-right: 4px;"></i> 已关联文件: ${article.content}`;
+                    lucide.createIcons();
                 }
             } catch (err) {
                 console.error(err);
             }
         }
-        // 剪贴板粘贴图片支持
-        document.getElementById('content').addEventListener('paste', async (e) => {
-            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-            for (const item of items) {
-                if (item.type.indexOf('image') !== -1) {
-                    e.preventDefault(); // 阻止默认的粘贴文本行为
-                    const file = item.getAsFile();
-                    const formData = new FormData();
-                    formData.append('image', file);
-                    
-                    const textarea = e.target;
-                    const startPos = textarea.selectionStart;
-                    const endPos = textarea.selectionEnd;
-                    
-                    // 插入加载提示
-                    const placeholder = '\n![正在上传图片...](uploading)\n';
-                    textarea.value = textarea.value.substring(0, startPos) + placeholder + textarea.value.substring(endPos);
-                    
-                    try {
-                        const token = localStorage.getItem('token');
-                        const response = await fetch('/api/upload-image', {
-                            method: 'POST',
-                            headers: { 'Authorization': `Bearer ${token}` },
-                            body: formData
-                        });
-                        const data = await response.json();
-                        if (data.status) {
-                            const markdownImage = `\n![图片](${data.data.url})\n`;
-                            textarea.value = textarea.value.replace(placeholder, markdownImage);
-                        } else {
-                            textarea.value = textarea.value.replace(placeholder, '\n![图片上传失败](' + data.message + ')\n');
-                        }
-                    } catch (err) {
-                        textarea.value = textarea.value.replace(placeholder, '\n![图片上传出错]()\n');
-                    }
-                }
-            }
-        });
 
-        document.getElementById('articleForm').addEventListener('submit', async (e) => {
+        document.getElementById('gameForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
             const submitText = document.getElementById('submitText');
@@ -409,21 +397,20 @@
             submitBtn.disabled = true;
             submitText.textContent = '处理中...';
 
-            const coverUrl = document.getElementById('cover').value;
-
             try {
                 const token = localStorage.getItem('token');
-
                 const articleData = {
                     title: document.getElementById('title').value,
-                    category: document.getElementById('category').value,
-                    coverUrl: coverUrl, // 得到的地址填入URL字段
-                    content: document.getElementById('content').value,
-                    displayMode: document.querySelector('input[name="displayMode"]:checked').value
+                    category: '游戏', // 固定分类
+                    coverUrl: document.getElementById('cover').value,
+                    content: document.getElementById('gameFileUrl').value,
+                    summary: document.getElementById('summary').value,
+                    displayMode: 'direct', // 统一为 direct 模式（直接打开）
+                    tags: 'mini-game'
                 };
 
-                const url = articleId ? `/api/articles/${articleId}` : '/api/articles';
-                const method = articleId ? 'PUT' : 'POST';
+                const url = gameId ? `/api/articles/${gameId}` : '/api/articles';
+                const method = gameId ? 'PUT' : 'POST';
 
                 const response = await fetch(url, {
                     method: method,
@@ -437,22 +424,14 @@
                 if (response.ok) {
                     window.location.href = 'articles.html';
                 } else {
-                    try {
-                        const res = await response.json();
-                        alert('保存失败: ' + (res.message || '未知错误'));
-                    } catch (e) {
-                        if (response.status === 413) {
-                            alert('保存失败：内容体积过大，超出了服务器限制。');
-                        } else {
-                            alert('保存失败：服务器响应异常');
-                        }
-                    }
+                    const res = await response.json();
+                    alert('保存失败: ' + (res.message || '未知错误'));
                     submitBtn.disabled = false;
                     submitText.textContent = originalText;
                 }
             } catch (err) {
                 console.error(err);
-                alert(err.message || '提交出错，请检查网络');
+                alert('提交出错，请检查网络');
                 submitBtn.disabled = false;
                 submitText.textContent = originalText;
             }

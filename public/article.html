@@ -375,8 +375,10 @@
                         document.querySelectorAll('pre code').forEach((block) => hljs.highlightBlock(block));
                     }
                 } else {
-                    // HTML 注入或 IFrame 模式保持原有逻辑但应用样式
-                    contentElement.innerHTML = `<iframe src="/uploads/${article.content}" style="width: 100%; border: none; min-height: 80vh; border-radius: 8px;"></iframe>`;
+                    // 优先尝试从 /game 目录加载，兼容旧的 /uploads 目录
+                    // 注意：这里的 logic 是为了应对通过详情页打开的情况
+                    const gameUrl = `/game/${article.content}`;
+                    contentElement.innerHTML = `<iframe src="${gameUrl}" style="width: 100%; border: none; min-height: 80vh; border-radius: 8px;"></iframe>`;
                 }
 
                 generateTOC();

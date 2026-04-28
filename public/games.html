@@ -60,6 +60,42 @@
             opacity: 1;
             transform: scale(1);
         }
+
+        .game-card .card-body {
+            padding: 24px;
+        }
+
+        .game-card .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+
+        .game-card .card-description {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .game-card .play-link {
+            color: var(--primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .game-card:hover .play-link {
+            gap: 12px;
+        }
     </style>
 </head>
 <body>
@@ -113,36 +149,45 @@
     <script>
         lucide.createIcons();
 
-        // 本地精品游戏数据
-        const featuredGames = [
-            { id: 'sudoku', title: '数独挑战', summary: '经典的逻辑解谜游戏，挑战你的脑力极限。', path: '/game/sudoku.html', cover: '/images/articles/article1.jpg' },
-            { id: 'match3', title: '消除大师', summary: '爽快感十足的消除挑战，指尖上的解压神器。', path: '/game/match3.html', cover: '/images/articles/article2.jpg' },
-            { id: 'arrow-out', title: '箭头突围', summary: '空间想象力大考验，规划路线，顺利突围。', path: '/game/arrow-out.html', cover: '/images/articles/article3.jpg' },
-            { id: 'number-match', title: '数字连连看', summary: '眼力与速度的双重竞技，寻找匹配的数字。', path: '/game/number-match.html', cover: '/images/articles/article4.jpg' }
-        ];
-
-        function loadGames() {
+        async function loadGames() {
             const grid = document.getElementById('gameGrid');
             
-            // 仅渲染本地精品游戏
-            grid.innerHTML = featuredGames.map(game => `
-                <div class="article-card game-card fade-in" onclick="location.href='${game.path}'">
-                    <span class="game-badge">精品作品</span>
-                    <img src="${game.cover}" class="card-image" alt="${game.title}">
-                    <div class="card-body">
-                        <h3 class="card-title">${game.title}</h3>
-                        <p style="color: var(--text-dim); font-size: 0.9rem; margin-bottom: 16px;">${game.summary}</p>
-                        <div class="card-meta" style="border-top: none; padding-top: 0;">
-                            <span style="display: flex; align-items: center; gap: 6px; color: var(--primary);">
-                                <i data-lucide="zap" style="width: 16px; height: 16px;"></i> 点击立即开始
-                            </span>
+            try {
+                const response = await fetch('/api/articles?category=游戏');
+                const data = await response.json();
+                
+                if (data.status && data.data.articles.length > 0) {
+                    grid.innerHTML = data.data.articles.map(game => `
+                        <div class="article-card game-card fade-in" onclick="window.open('/game/${game.content}', '_blank')">
+                            <span class="game-badge">精品作品</span>
+                            <div style="overflow: hidden; height: 220px;">
+                                <img src="${game.coverUrl || '/images/articles/default-game.jpg'}" class="card-image" alt="${game.title}">
+                            </div>
+                            <div class="card-body">
+                                <h3 class="card-title">${game.title}</h3>
+                                <p class="card-description">${game.tags === 'mini-game' ? '点击开始挑战，刷新你的最高分！' : (game.summary || '这是一场关于逻辑与速度的精彩冒险。')}</p>
+                                <div class="play-link">
+                                    <i data-lucide="zap" style="width: 18px; height: 18px;"></i>
+                                    点击立即开始
+                                </div>
+                            </div>
+                            <div class="play-btn">
+                                <i data-lucide="play" style="fill: white;"></i>
+                            </div>
                         </div>
-                    </div>
-                    <div class="play-btn">
-                        <i data-lucide="play" style="fill: white;"></i>
-                    </div>
-                </div>
-            `).join('');
+                    `).join('');
+                } else {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 100px;">
+                            <i data-lucide="ghost" style="width: 48px; height: 48px; color: var(--text-dim); margin-bottom: 16px;"></i>
+                            <p style="color: var(--text-dim);">目前还没有发布的小游戏，快去后台发布一个吧！</p>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.error('加载游戏失败:', err);
+                grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #ef4444;">加载失败，请刷新重试</p>`;
+            }
 
             lucide.createIcons();
         }
