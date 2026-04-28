@@ -44,6 +44,14 @@
             </div>
         </section>
 
+        <div class="category-filter fade-in" style="display: flex; justify-content: center; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; animation-delay: 0.1s;">
+            <button class="btn btn-primary" onclick="setCategory('')" id="cat-all">全部</button>
+            <button class="btn" style="border: 1px solid var(--border-glass);" onclick="setCategory('技术')" id="cat-技术">技术</button>
+            <button class="btn" style="border: 1px solid var(--border-glass);" onclick="setCategory('游戏')" id="cat-游戏">游戏</button>
+            <button class="btn" style="border: 1px solid var(--border-glass);" onclick="setCategory('生活')" id="cat-生活">生活</button>
+            <button class="btn" style="border: 1px solid var(--border-glass);" onclick="setCategory('随笔')" id="cat-随笔">随笔</button>
+        </div>
+
         <div class="article-grid" id="articleGrid">
             <!-- 文章将通过JavaScript动态加载 -->
         </div>
@@ -68,6 +76,7 @@
         let currentPage = 1;
         const pageSize = 12;
         let searchKeyword = '';
+        let currentCategory = '';
 
         // 处理滚动效果
         window.addEventListener('scroll', () => {
@@ -97,6 +106,31 @@
             if (event.key === 'Enter') {
                 handleSearch();
             }
+        }
+
+        // 处理分类切换
+        function setCategory(category) {
+            currentCategory = category;
+            
+            // 更新按钮样式
+            const categories = ['', '技术', '游戏', '生活', '随笔'];
+            categories.forEach(cat => {
+                const btnId = cat === '' ? 'cat-all' : `cat-${cat}`;
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    if (cat === category) {
+                        btn.className = 'btn btn-primary';
+                        btn.style.border = 'none';
+                    } else {
+                        btn.className = 'btn';
+                        btn.style.border = '1px solid var(--border-glass)';
+                    }
+                }
+            });
+
+            // 重新加载数据
+            currentPage = 1;
+            loadArticles(1);
         }
 
         // 检查登录状态
@@ -169,6 +203,9 @@
                 if (searchKeyword) {
                     searchParams.append('title', searchKeyword);
                     searchParams.append('content', searchKeyword);
+                }
+                if (currentCategory) {
+                    searchParams.append('category', currentCategory);
                 }
 
                 const response = await fetch(`/api/articles?${searchParams.toString()}`);
