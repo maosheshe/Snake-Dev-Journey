@@ -26,7 +26,18 @@ const app = express();
 // 导入数据模型
 const {Article} = require('./models'); // 文章数据模型
 const {User} = require('./models'); // 用户数据模型
-const {Op} = require('sequelize');
+const { Op } = require('sequelize');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+const sharp = require('sharp');
+const { StatusCodes } = require('http-status-codes');
+
+// 导入中间件与工具
+const AppError = require('./utils/appError');
+const errorHandler = require('./middleware/errorHandler');
+const validate = require('./middleware/validate');
+const { registerSchema, loginSchema } = require('./schemas/authSchema');
+const { articleSchema } = require('./schemas/articleSchema');
     
 
 /**
@@ -80,6 +91,43 @@ app.use(express.json({ limit: '50mb' })); // 解析JSON请求体，限制大小�
 app.use(express.urlencoded({ limit: '50mb', extended: true })); // 同时增加 URL 编码限制
 app.use(express.static('public')); // 提供静态文件服务
 app.use(limiter); // 将速率限制应用在静态文件之后，防止加载资源时被拦截
+
+/**
+ * Swagger 配置
+ */
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: "蛇蛇的开发之旅 API",
+            version: "1.0.0",
+            description: "个人博客系统后端接口文档",
+            contact: {
+                name: "Snake",
+                url: "https://github.com/maosheshe/Snake-Dev-Journey"
+            }
+        },
+        servers: [
+            {
+                url: "http://localhost:3000",
+                description: "开发服务器"
+            }
+        ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT'
+                }
+            }
+        }
+    },
+    apis: ["./server.js"] // 文档注释所在文件
+};
+
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 /**
  * 根路由处理
@@ -155,13 +203,30 @@ pool.getConnection((err, connection) => {
 });
 
 /**
- * 用户注册接口
- * POST /api/register
- * @param {string} username - 用户名
- * @param {string} password - 密码
- * @returns {object} message - 注册结果消息
+ * @swagger
+ * /api/register:
+ *   post:
+ *     summary: 用户注册
+ *     tags: [认证]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, password]
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: 注册成功
+ *       400:
+ *         description: 用户名已存在或数据校验失败
  */
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', validate(registerSchema), async (req, res, next) => {
     const { username, password } = req.body;
 
     try {
@@ -170,13 +235,11 @@ app.post('/api/register', async (req, res) => {
         // 检查用户名是否已存在
         const existingUser = await User.findOne({ where: { username } });
         if (existingUser) {
-            console.log('用户名已存在:', username);
-            return res.status(400).json({ message: '用户名已存在' });
+            return next(new AppError('用户名已存在', StatusCodes.BAD_REQUEST));
         }
 
         // 使用bcrypt加密密码
         const hashedPassword = await bcrypt.hash(password, 10);
-        console.log('密码加密完成');
 
         // 创建新用户记录
         await User.create({
@@ -184,42 +247,53 @@ app.post('/api/register', async (req, res) => {
             password: hashedPassword,
             role: 'free'
         });
-        console.log('用户数据插入成功');
 
-        res.status(201).json({ message: '注册成功' });
+        res.status(StatusCodes.CREATED).json({ 
+            status: true,
+            message: '注册成功' 
+        });
     } catch (error) {
-        console.error('注册错误详情:', error);
-        console.error('错误堆栈:', error.stack);
-        res.status(500).json({ message: '服务器错误' });
+        next(error);
     }
 });
 
 /**
- * 用户登录接口
- * POST /api/login
- * @param {string} username - 用户名
- * @param {string} password - 密码
- * @returns {object} token - JWT访问令牌
+ * @swagger
+ * /api/login:
+ *   post:
+ *     summary: 用户登录
+ *     tags: [认证]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [username, password]
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 登录成功，返回 JWT
+ *       401:
+ *         description: 用户名或密码错误
  */
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', validate(loginSchema), async (req, res, next) => {
     const { username, password } = req.body;
-console.log('开始登录流程，用户名:', username,password);
+
     try {
         // 查询用户信息
         const user = await User.findOne({
             where: { username },
-            attributes: ['id', 'username', 'password', 'role', 'createdAt', 'updatedAt']
+            attributes: ['id', 'username', 'password', 'role']
         });
 
         // 用户不存在
-        if (!user) {
-            return res.status(401).json({ message: '用户名或密码错误' });
-        }
-
-        // 验证密码
-        const validPassword = await bcrypt.compare(password, user.password);
-        if (!validPassword) {
-            return res.status(401).json({ message: '用户名或密码错误' });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return next(new AppError('用户名或密码错误', StatusCodes.UNAUTHORIZED));
         }
 
         // 生成JWT令牌，有效期7天
@@ -230,65 +304,48 @@ console.log('开始登录流程，用户名:', username,password);
         );
 
         res.json({ 
+            status: true,
             token,
             role: user.role,
             username: user.username
         });
     } catch (error) {
-        console.error('详细错误:', error.stack); // 输出堆栈信息
-        res.status(500).json({ status: false, message: error.message }); // 返回具体错误
+        next(error);
     }
 });
 
-/**
- * 处理封面 URL
- * 仅返回原始 URL，不再执行本地化下载（由前端处理或直接使用外链）
- * @param {string} coverUrl - 封面 URL
- * @returns {Promise<object>} - { success: true, url: string }
- */
-async function processCoverUrl(coverUrl) {
-    return { success: true, url: coverUrl };
-}
+// 已移除 processCoverUrl 逻辑，由 Sharp 统一处理或直接存储 URL
 
 /**
- * 创建文章接口
- * POST /api/articles
- * 需要JWT令牌验证
- * @param {string} title - 文章标题
- * @param {string} content - 文章内容
- * @returns {object} 包含状态、消息和文章ID
+ * @swagger
+ * /api/articles:
+ *   post:
+ *     summary: 创建新文章
+ *     tags: [文章]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ArticleInput'
+ *     responses:
+ *       201:
+ *         description: 创建成功
  */
-app.post('/api/articles', async (req, res) => {
-        const { title, content, summary, category, tags, displayMode, coverUrl, forceSave } = req.body;
-        const token = req.headers.authorization?.split(' ')[1];
-    console.log('token:',token);
-        if (!token) {
-            return res.status(401).json({
-                 status: false,
-                 message: '未授权' });
-        }
-    
-        try {
-            // 验证JWT令牌
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            const userId = decoded.userId;
-    
-            // 处理封面 URL
-            console.log('正在处理封面 URL...');
-            const result = await processCoverUrl(coverUrl);
-            
-            if (!result.success && !forceSave) {
-                return res.status(400).json({
-                    status: false,
-                    errorCode: 'DOWNLOAD_FAILED',
-                    message: '无法下载外部图片，请确认链接是否有效'
-                });
-            }
-            
-            const localCoverUrl = result.url;
-            console.log('封面 URL 处理完成:', localCoverUrl);
+app.post('/api/articles', validate(articleSchema), async (req, res, next) => {
+    const { title, content, summary, category, tags, displayMode, coverUrl } = req.body;
+    const token = req.headers.authorization?.split(' ')[1];
 
-        // 创建新文章
+    if (!token) {
+        return next(new AppError('未授权', StatusCodes.UNAUTHORIZED));
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+        const userId = decoded.userId;
+
         const article = await Article.create({
             title,
             content,
@@ -296,20 +353,17 @@ app.post('/api/articles', async (req, res) => {
             category,
             tags,
             displayMode: displayMode || 'markdown',
-            coverUrl: localCoverUrl,
+            coverUrl,
             userId
         });
 
-        res.status(201).json({
+        res.status(StatusCodes.CREATED).json({
             status: true,
             message: '文章创建成功',
             articleId: article.id
         });
     } catch (error) {
-        console.error('创建文章错误详情:', error);
-        res.status(500).json({ 
-            status: false,
-            message: '服务器错误: ' + error.message });
+        next(error);
     }
 });
 
@@ -334,11 +388,29 @@ function formatDate(dateString) {
 }
 
 /**
- * 获取文章列表接口
- * GET /api/articles
- * @returns {object} 包含状态、消息和文章列表数据
+ * @swagger
+ * /api/articles:
+ *   get:
+ *     summary: 获取文章列表
+ *     tags: [文章]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 获取成功
  */
-app.get('/api/articles', async (req, res) => {
+app.get('/api/articles', async (req, res, next) => {
     try {
         const query = req.query;
         const page = parseInt(query.page) || 1;
@@ -360,34 +432,27 @@ app.get('/api/articles', async (req, res) => {
             where.category = query.category;
         }
 
-        // 权限过滤：如果是后台管理请求（携带有效 token）
+        // 权限过滤
         const token = req.headers.authorization?.split(' ')[1];
         if (token) {
             try {
                 const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-                // 如果不是管理员，只能看自己的文章
                 if (decoded.role !== 'admin') {
                     where.userId = decoded.userId;
-                    console.log(`用户 ${decoded.username} 正在查看自己的文章列表`);
-                } else {
-                    console.log(`管理员 ${decoded.username} 正在查看所有文章列表`);
                 }
             } catch (err) {
-                // Token 无效或过期，不执行额外过滤（作为公开请求处理）
+                // Ignore invalid token for list view
             }
         }
 
-        // 查询文章总数
         const total = await Article.count({ where });
-        
-        // 查询分页后的文章及其作者信息
         const articles = await Article.findAll({
             include: [{
                 model: User,
                 attributes: ['username'],
                 as: 'user'
             }],
-            order: [['createdAt', 'DESC']], // 按创建时间降序排序
+            order: [['createdAt', 'DESC']],
             where,
             limit: pageSize,
             offset: offset
@@ -397,10 +462,7 @@ app.get('/api/articles', async (req, res) => {
             status: true,
             message: '获取文章列表成功',
             data: {
-                articles: articles.map(article => ({
-                    ...article.get({ plain: true }),
-                    user: article.user ? article.user.get({ plain: true }) : null
-                })),
+                articles,
                 pagination: {
                     total,
                     current: page,
@@ -410,25 +472,32 @@ app.get('/api/articles', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('获取文章列表错误:', error);
-        res.status(500).json({ 
-            status: false,
-            message: '服务器错误' 
-        });
+        next(error);
     }
 });
 
 /**
- * 获取文章详情接口
- * GET /api/articles/:id
- * @param {string} id - 文章ID
- * @returns {object} 包含状态、消息和文章详细信息
+ * @swagger
+ * /api/articles/{id}:
+ *   get:
+ *     summary: 获取文章详情
+ *     tags: [文章]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 获取成功
+ *       404:
+ *         description: 文章不存在
  */
-app.get('/api/articles/:id', async (req, res) => {
+app.get('/api/articles/:id', async (req, res, next) => {
     const articleId = req.params.id;
 
     try {
-        // 查询文章及其作者信息
         const article = await Article.findByPk(articleId, {
             include: [{
                 model: User,
@@ -438,96 +507,73 @@ app.get('/api/articles/:id', async (req, res) => {
         });
 
         if (!article) {
-            return res.status(404).json({ message: '文章不存在' });
+            return next(new AppError('文章不存在', StatusCodes.NOT_FOUND));
         }
 
-        // 增加阅读量
         await article.increment('views');
-        // 刷新模型以获取更新后的阅读量
         await article.reload();
 
         res.json({
             status: true,
             message: '获取文章详情成功',
             data: {
-                article: {
-                    ...article.get({ plain: true }),
-                    user: article.user ? article.user.get({ plain: true }) : null
-                }
+                article
             }
         });
     } catch (error) {
-        console.error('获取文章详情错误:', error);
-        res.status(500).json({ 
-            status: false,
-            message: '服务器错误' 
-        });
+        next(error);
     }
 });
 
 /**
- * 更新文章接口
- * PUT /api/articles/:id
- * 需要JWT令牌验证
- * @param {string} id - 文章ID
- * @param {string} title - 新的文章标题
- * @param {string} content - 新的文章内容
- * @returns {object} 包含状态和消息
+ * @swagger
+ * /api/articles/{id}:
+ *   put:
+ *     summary: 更新文章
+ *     tags: [文章]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 更新成功
  */
-app.put('/api/articles/:id', async (req, res) => {
+app.put('/api/articles/:id', validate(articleSchema), async (req, res, next) => {
     const articleId = req.params.id;
-        const { title, content, summary, category, tags, displayMode, coverUrl, forceSave } = req.body;
-        const token = req.headers.authorization?.split(' ')[1];
+    const { title, content, summary, category, tags, displayMode, coverUrl } = req.body;
+    const token = req.headers.authorization?.split(' ')[1];
     
-        if (!token) {
-            return res.status(401).json({
-                 status: false,
-                 message: '未授权' });
+    if (!token) {
+        return next(new AppError('未授权', StatusCodes.UNAUTHORIZED));
+    }
+    
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+        const userId = decoded.userId;
+    
+        const article = await Article.findByPk(articleId);
+    
+        if (!article) {
+            return next(new AppError('文章不存在', StatusCodes.NOT_FOUND));
         }
     
-        try {
-            // 验证JWT令牌
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            const userId = decoded.userId;
+        if (article.userId !== userId && decoded.role !== 'admin') {
+            return next(new AppError('无权修改此文章', StatusCodes.FORBIDDEN));
+        }
     
-            // 检查文章是否存在
-            const article = await Article.findByPk(articleId);
-    
-            if (!article) {
-                return res.status(404).json({ 
-                    status: false,
-                    message: '文章不存在' });
-            }
-    
-            // 只有作者本人或管理员可以修改
-            if (article.userId !== userId && decoded.role !== 'admin') {
-                return res.status(403).json({ 
-                    status: false,
-                    message: '无权修改此文章' });
-            }
-    
-            // 处理封面 URL
-            const result = await processCoverUrl(coverUrl);
-
-            if (!result.success && !forceSave) {
-                return res.status(400).json({
-                    status: false,
-                    errorCode: 'DOWNLOAD_FAILED',
-                    message: '无法下载外部图片，请确认链接是否有效'
-                });
-            }
-
-            const localCoverUrl = result.url;
-
-        // 更新文章内容
         await article.update({
-            title: title,
-            content: content,
-            summary: summary,
-            category: category,
-            tags: tags,
-            displayMode: displayMode,
-            coverUrl: localCoverUrl
+            title,
+            content,
+            summary,
+            category,
+            tags,
+            displayMode,
+            coverUrl
         });
 
         res.json({ 
@@ -535,119 +581,99 @@ app.put('/api/articles/:id', async (req, res) => {
             message: '文章更新成功' 
         });
     } catch (error) {
-        console.error('更新文章错误详情:', error);
-        res.status(500).json({ 
-            status: false,
-            message: '服务器错误: ' + error.message });
+        next(error);
     }
 });
 
 /**
- * 删除文章接口
- * DELETE /api/articles/:id
- * 需要JWT令牌验证
- * @param {string} id - 文章ID
- * @returns {object} 包含状态和消息
+ * @swagger
+ * /api/articles/{id}:
+ *   delete:
+ *     summary: 删除文章
+ *     tags: [文章]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 删除成功
  */
-app.delete('/api/articles/:id', async (req, res) => {
+app.delete('/api/articles/:id', async (req, res, next) => {
     const articleId = req.params.id;
     const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
-        return res.status(401).json({ 
-            status: false,
-            message: '未授权' });
+        return next(new AppError('未授权', StatusCodes.UNAUTHORIZED));
     }
 
     try {
-        // 验证JWT令牌
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
         const userId = decoded.userId;
 
-        // 检查文章是否存在
         const article = await Article.findByPk(articleId);
 
         if (!article) {
-            return res.status(404).json({ 
-                status: false,
-                message: '文章不存在' });
+            return next(new AppError('文章不存在', StatusCodes.NOT_FOUND));
         }
 
-        // 只有作者本人或管理员可以删除
         if (article.userId !== userId && decoded.role !== 'admin') {
-            return res.status(403).json({ 
-                status: false,
-                message: '无权删除此文章' });
+            return next(new AppError('无权删除此文章', StatusCodes.FORBIDDEN));
         }
 
-        // 删除关联的本地封面图
+        // 删除关联的本地资源
         if (article.coverUrl && article.coverUrl.startsWith('/images/articles/')) {
             const coverPath = path.join(__dirname, 'public', article.coverUrl);
-            if (fs.existsSync(coverPath)) {
-                try {
-                    fs.unlinkSync(coverPath);
-                    console.log(`删除了关联的封面图: ${coverPath}`);
-                } catch (err) {
-                    console.error('删除封面图失败:', err);
-                }
-            }
+            if (fs.existsSync(coverPath)) fs.unlinkSync(coverPath);
         }
 
-        // 删除关联的 HTML 文件 (针对分类为“游戏”的内容)
         if (article.category === '游戏' && article.content) {
             const fileName = path.basename(article.content);
             const gamePath = path.join(__dirname, 'public', 'game', fileName);
-            const uploadsPath = path.join(__dirname, 'public', 'uploads', fileName);
-            
-            // 检查 game 目录和旧的 uploads 目录
-            const possiblePaths = [gamePath, uploadsPath];
-            
-            possiblePaths.forEach(htmlPath => {
-                if (fs.existsSync(htmlPath)) {
-                    try {
-                        fs.unlinkSync(htmlPath);
-                        console.log(`删除了关联的HTML文件: ${htmlPath}`);
-                    } catch (err) {
-                        console.error(`删除HTML文件失败 (${htmlPath}):`, err);
-                    }
-                }
-            });
+            if (fs.existsSync(gamePath)) fs.unlinkSync(gamePath);
         }
 
-        // 删除文章
         await article.destroy();
 
         res.json({ 
             status: true,
-            message: '文章删除成功' });
+            message: '文章删除成功' 
+        });
     } catch (error) {
-        console.error('删除文章错误:', error);
-        res.status(500).json({ 
-            status: false,
-            message: '服务器错误' });
+        next(error);
     }
 });
 
 /**
- * 文章点赞接口
- * POST /api/articles/:id/like
- * @param {string} id - 文章ID
- * @returns {object} 包含状态、消息和更新后的点赞数
+ * @swagger
+ * /api/articles/{id}/like:
+ *   post:
+ *     summary: 点赞文章
+ *     tags: [文章]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 点赞成功
  */
-app.post('/api/articles/:id/like', async (req, res) => {
+app.post('/api/articles/:id/like', async (req, res, next) => {
     const articleId = req.params.id;
 
     try {
         const article = await Article.findByPk(articleId);
 
         if (!article) {
-            return res.status(404).json({ 
-                status: false, 
-                message: '文章不存在' 
-            });
+            return next(new AppError('文章不存在', StatusCodes.NOT_FOUND));
         }
 
-        // 增加点赞数
         await article.increment('likes');
         await article.reload();
 
@@ -659,33 +685,36 @@ app.post('/api/articles/:id/like', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('点赞文章错误:', error);
-        res.status(500).json({ 
-            status: false,
-            message: '服务器错误' 
-        });
+        next(error);
     }
 });
 
 /**
- * HTML 文件上传接口
- * POST /api/upload-html
- * 仅限已登录用户上传
+ * @swagger
+ * /api/upload-html:
+ *   post:
+ *     summary: 上传 HTML 游戏文件
+ *     tags: [上传]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 上传成功
  */
 app.post('/api/upload-html', (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-        return res.status(401).json({ status: false, message: '未授权，请先登录' });
+        return next(new AppError('未授权，请先登录', StatusCodes.UNAUTHORIZED));
     }
     try {
-        jwt.verify(token, process.env.JWT_SECRET);
+        jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
         next();
     } catch (err) {
-        return res.status(401).json({ status: false, message: '登录已过期' });
+        return next(new AppError('登录已过期', StatusCodes.UNAUTHORIZED));
     }
-}, upload.single('htmlFile'), (req, res) => {
+}, upload.single('htmlFile'), (req, res, next) => {
     if (!req.file) {
-        return res.status(400).json({ status: false, message: '请选择要上传的文件' });
+        return next(new AppError('请选择要上传的文件', StatusCodes.BAD_REQUEST));
     }
     res.json({
         status: true,
@@ -726,41 +755,70 @@ const uploadCover = multer({
  * 文章封面上传接口
  * POST /api/upload-cover
  */
+/**
+ * @swagger
+ * /api/upload-cover:
+ *   post:
+ *     summary: 上传文章封面 (自动优化)
+ *     tags: [上传]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               coverFile:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: 上传并处理成功
+ */
 app.post('/api/upload-cover', (req, res, next) => {
-    console.log('收到封面上传请求');
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-        console.log('封面上传失败: 未提供 token');
-        return res.status(401).json({ status: false, message: '未授权，请先登录' });
+        return next(new AppError('未授权，请先登录', StatusCodes.UNAUTHORIZED));
     }
     try {
         jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
         next();
     } catch (err) {
-        console.log('封面上传失败: token 验证失败', err.message);
-        return res.status(401).json({ status: false, message: '登录已过期' });
+        return next(new AppError('登录已过期', StatusCodes.UNAUTHORIZED));
     }
-}, (req, res, next) => {
-    // 增加一个额外的错误处理中间件来捕获 multer 错误
-    uploadCover.single('coverFile')(req, res, (err) => {
-        if (err) {
-            console.error('Multer 封面上传错误:', err);
-            return next(err);
-        }
-        next();
-    });
-}, (req, res) => {
-    console.log('封面上传成功:', req.file?.filename);
+}, uploadCover.single('coverFile'), async (req, res, next) => {
     if (!req.file) {
-        return res.status(400).json({ status: false, message: '请选择要上传的文件' });
+        return next(new AppError('请选择要上传的文件', StatusCodes.BAD_REQUEST));
     }
-    res.json({
-        status: true,
-        message: '封面上传成功',
-        data: {
-            url: `/images/articles/${req.file.filename}`
-        }
-    });
+
+    try {
+        const inputPath = req.file.path;
+        const outputPath = inputPath.replace(path.extname(inputPath), '.webp');
+        const webpFilename = path.basename(outputPath);
+
+        // 使用 sharp 处理图片：调整大小并转换为 WebP
+        await sharp(inputPath)
+            .resize(1200, 675, { // 16:9 比例
+                fit: 'cover',
+                position: 'center'
+            })
+            .webp({ quality: 80 })
+            .toFile(outputPath);
+
+        // 删除原始上传文件
+        fs.unlinkSync(inputPath);
+
+        res.json({
+            status: true,
+            message: '封面上传并优化成功',
+            data: {
+                url: `/images/articles/${webpFilename}`
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
 });
 
 /**
@@ -801,34 +859,8 @@ app.post('/api/upload-image', (req, res, next) => {
     });
 });
 
-/**
- * 全局错误处理中间件
- * 捕获所有未处理的错误并返回 JSON 响应
- */
-app.use((err, req, res, next) => {
-    console.error('全局错误拦截:', err);
-    
-    // 处理 Payload Too Large 错误 (来自 express.json)
-    if (err.type === 'entity.too.large' || err.status === 413) {
-        return res.status(413).json({ 
-            status: false, 
-            message: '提交内容过大，请减小图片体积或分次提交' 
-        });
-    }
-
-    // 处理 Multer 错误
-    if (err instanceof multer.MulterError) {
-        if (err.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({ status: false, message: '文件大小不能超过限制' });
-        }
-        return res.status(400).json({ status: false, message: '文件上传错误: ' + err.message });
-    }
-    
-    res.status(err.status || 500).json({
-        status: false,
-        message: err.message || '服务器内部错误'
-    });
-});
+// 使用全局错误处理中间件
+app.use(errorHandler);
 
 // 启动服务器
 const { sequelize } = require('./models');
