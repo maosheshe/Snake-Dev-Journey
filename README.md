@@ -84,6 +84,26 @@ docker-compose up -d
 
 ---
 
+## 🔄 维护与更新
+
+当你在服务器上执行 `git pull` 更新代码后，请务必执行以下操作以确保新功能（如图片优化、API 校验）正常运行：
+
+### 🛠️ 推荐方式 (使用自动化脚本)
+项目中已内置 `deploy.sh` 脚本，可一键完成 **拉取代码 -> 更新依赖 -> 数据库迁移 -> 重启服务**：
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+### 📝 手动更新步骤
+如果你习惯手动操作，请严格遵循以下顺序：
+1. **拉取代码**: `git pull`
+2. **安装新依赖**: `npm install --production`  <-- ⚡ **最重要的一步，防止程序崩溃**
+3. **数据库迁移**: `npx sequelize-cli db:migrate`
+4. **重启进程**: `pm2 restart all` 或 `docker-compose up -d --build`
+
+---
+
 ## 🛡️ 安全保证
 
 - **CSP 策略**: 深度优化的内容安全策略。
