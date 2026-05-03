@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -98,6 +99,7 @@
         }
     </style>
 </head>
+
 <body>
     <header class="header" id="header">
         <div class="container nav">
@@ -106,11 +108,13 @@
                 <span>蛇蛇</span>的开发之旅
             </a>
             <div style="display: flex; align-items: center; gap: 20px;">
-                <button id="themeToggle" class="btn" style="padding: 8px; border: 1px solid var(--border-glass); background: transparent; color: var(--text-main);" onclick="toggleTheme()" title="切换主题">
+                <button id="themeToggle" class="btn"
+                    style="padding: 8px; border: 1px solid var(--border-glass); background: transparent; color: var(--text-main);"
+                    onclick="toggleTheme()" title="切换主题">
                     <i data-lucide="sun"></i>
                 </button>
                 <a href="/" class="btn" style="border: 1px solid var(--border-glass)">
-                    <i data-lucide="home"></i> 返回主页
+                    <i data-lucide="home"></i> 返回
                 </a>
             </div>
         </div>
@@ -119,8 +123,10 @@
     <main>
         <section class="games-hero">
             <div class="container">
-                <h1 class="fade-in" style="font-size: 3.5rem; margin-bottom: 16px;">创意<span style="color: var(--primary)">小游戏</span></h1>
-                <p class="fade-in" style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+                <h1 class="fade-in" style="font-size: 3.5rem; margin-bottom: 16px;">创意<span
+                        style="color: var(--primary)">小游戏</span></h1>
+                <p class="fade-in"
+                    style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
                     这里展示了我用代码构建的奇妙世界。从经典的复刻到疯狂的创意，每一个像素都跳动着逻辑的旋律。
                 </p>
             </div>
@@ -130,7 +136,8 @@
             <div class="article-grid" id="gameGrid">
                 <!-- 游戏列表将动态加载 -->
                 <div style="grid-column: 1/-1; text-align: center; padding: 100px;">
-                    <i data-lucide="loader-2" class="animate-spin" style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 16px;"></i>
+                    <i data-lucide="loader-2" class="animate-spin"
+                        style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 16px;"></i>
                     <p>正在寻找宝藏游戏...</p>
                 </div>
             </div>
@@ -141,7 +148,8 @@
         <div class="container" style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
             <div style="display: flex; gap: 30px; font-size: 0.9rem; color: var(--text-muted);">
                 <span>Copyright © 2025 毛蛇蛇</span>
-                <a href="https://beian.miit.gov.cn/" target="_blank" style="color: inherit; text-decoration: none;">粤ICP备2025400537号-1</a>
+                <a href="https://beian.miit.gov.cn/" target="_blank"
+                    style="color: inherit; text-decoration: none;">粤ICP备2025400537号-1</a>
             </div>
         </div>
     </footer>
@@ -151,11 +159,11 @@
 
         async function loadGames() {
             const grid = document.getElementById('gameGrid');
-            
+
             try {
                 const response = await fetch('/api/articles?category=游戏');
                 const data = await response.json();
-                
+
                 if (data.status && data.data.articles.length > 0) {
                     grid.innerHTML = data.data.articles.map(game => `
                         <div class="article-card game-card fade-in" onclick="window.open('/game/${game.content}', '_blank')">
@@ -195,4 +203,5 @@
         window.onload = loadGames;
     </script>
 </body>
+
 </html>

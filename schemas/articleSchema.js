@@ -8,9 +8,9 @@ const articleSchema = z.object({
         
         content: z.string({
             required_error: "内容是必填项"
-        }).min(10, "内容至少需要10个字符"),
+        }).min(5, "内容至少需要5个字符"),
         
-        summary: z.string().optional(),
+        summary: z.string().optional().nullable(),
         
         category: z.string().optional().default('未分类'),
         
@@ -18,7 +18,12 @@ const articleSchema = z.object({
         
         displayMode: z.enum(['markdown', 'inject', 'iframe', 'direct']).optional().default('markdown'),
         
-        coverUrl: z.string().url("封面链接格式不正确").or(z.string().regex(/^\/images\//)).optional(),
+        coverUrl: z.string()
+            .url("封面链接格式不正确")
+            .or(z.string().regex(/^\/images\//, "封面链接格式不正确"))
+            .or(z.literal(""))
+            .optional()
+            .nullable(),
         
         forceSave: z.boolean().optional()
     })

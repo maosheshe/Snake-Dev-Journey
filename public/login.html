@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/main.css">
     <!-- Theme Management -->
     <script src="/js/theme.js"></script>
+    <script src="/js/notifications.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .auth-container {
@@ -185,7 +186,14 @@
             }
         }
 
-        window.onload = checkLoginStatus;
+        window.onload = () => {
+            checkLoginStatus();
+            // 检查是否刚注册成功
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('registered') === 'true') {
+                toast.success('账号注册成功，请登录', '注册成功');
+            }
+        };
     </script>
 </body>
 </html>

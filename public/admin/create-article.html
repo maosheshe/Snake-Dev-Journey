@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/main.css">
     <!-- Theme Management -->
     <script src="/js/theme.js"></script>
+    <script src="/js/notifications.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .admin-layout {
@@ -318,13 +319,14 @@
                     if (uploadData.status) {
                         coverInput.value = uploadData.data.url;
                         preview.innerHTML = `<img src="${uploadData.data.url}">`;
+                        toast.success('封面图片上传并处理成功');
                     } else {
-                        alert('上传失败: ' + uploadData.message);
+                        toast.error('上传失败: ' + uploadData.message);
                         preview.innerHTML = `<span style="color: #ef4444; font-size: 0.8rem;">上传失败</span>`;
                     }
                 } catch (err) {
                     console.error('上传出错:', err);
-                    alert('图片上传发生错误');
+                    toast.error('图片上传发生错误');
                     preview.innerHTML = `<span style="color: #ef4444; font-size: 0.8rem;">上传错误</span>`;
                 }
             }
@@ -435,16 +437,19 @@
                 });
 
                 if (response.ok) {
-                    window.location.href = 'articles.html';
+                    toast.success(articleId ? '文章更新成功' : '文章发布成功');
+                    setTimeout(() => {
+                        window.location.href = 'articles.html';
+                    }, 1000);
                 } else {
                     try {
                         const res = await response.json();
-                        alert('保存失败: ' + (res.message || '未知错误'));
+                        toast.error(res.message || '未知错误', '保存失败');
                     } catch (e) {
                         if (response.status === 413) {
-                            alert('保存失败：内容体积过大，超出了服务器限制。');
+                            toast.error('内容体积过大，超出了服务器限制', '保存失败');
                         } else {
-                            alert('保存失败：服务器响应异常');
+                            toast.error('服务器响应异常', '保存失败');
                         }
                     }
                     submitBtn.disabled = false;
@@ -452,7 +457,7 @@
                 }
             } catch (err) {
                 console.error(err);
-                alert(err.message || '提交出错，请检查网络');
+                toast.error(err.message || '提交出错，请检查网络', '网络错误');
                 submitBtn.disabled = false;
                 submitText.textContent = originalText;
             }

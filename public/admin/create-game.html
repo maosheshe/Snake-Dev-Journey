@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/main.css">
     <!-- Theme Management -->
     <script src="/js/theme.js"></script>
+    <script src="/js/notifications.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .admin-layout {
@@ -301,13 +302,14 @@
                         fileInfo.style.display = 'flex';
                         fileInfo.innerHTML = `<i data-lucide="check-circle" style="width: 14px; height: 14px; margin-right: 4px;"></i> 文件已上传: ${data.data.filename}`;
                         lucide.createIcons();
+                        toast.success('游戏文件上传成功');
                     } else {
-                        alert('上传失败: ' + data.message);
+                        toast.error('上传失败: ' + data.message);
                         gameUrlInput.value = '';
                     }
                 } catch (err) {
                     console.error('上传出错:', err);
-                    alert('上传过程中发生错误');
+                    toast.error('上传过程中发生错误');
                     gameUrlInput.value = '';
                 }
             }
@@ -343,12 +345,14 @@
                     if (uploadData.status) {
                         coverInput.value = uploadData.data.url;
                         preview.innerHTML = `<img src="${uploadData.data.url}">`;
+                        toast.success('封面上传成功');
                     } else {
-                        alert('上传失败: ' + uploadData.message);
+                        toast.error('上传失败: ' + uploadData.message);
                         preview.innerHTML = `<span style="color: #ef4444; font-size: 0.8rem;">上传失败</span>`;
                     }
                 } catch (err) {
                     console.error('上传出错:', err);
+                    toast.error('图片上传发生错误');
                     preview.innerHTML = `<span style="color: #ef4444; font-size: 0.8rem;">上传错误</span>`;
                 }
             }
@@ -422,16 +426,19 @@
                 });
 
                 if (response.ok) {
-                    window.location.href = 'articles.html';
+                    toast.success(gameId ? '小游戏更新成功' : '小游戏发布成功');
+                    setTimeout(() => {
+                        window.location.href = 'articles.html';
+                    }, 1000);
                 } else {
                     const res = await response.json();
-                    alert('保存失败: ' + (res.message || '未知错误'));
+                    toast.error(res.message || '未知错误', '保存失败');
                     submitBtn.disabled = false;
                     submitText.textContent = originalText;
                 }
             } catch (err) {
                 console.error(err);
-                alert('提交出错，请检查网络');
+                toast.error('提交出错，请检查网络');
                 submitBtn.disabled = false;
                 submitText.textContent = originalText;
             }

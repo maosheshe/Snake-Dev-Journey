@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/main.css">
     <!-- Theme Management -->
     <script src="/js/theme.js"></script>
+    <script src="/js/notifications.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -266,7 +267,9 @@
         }
 
         async function deleteArticle(id) {
-            if (!confirm('确定要删除这篇文章吗？此操作不可逆。')) return;
+            const confirmed = await toast.confirm('确认删除', '确定要删除这篇文章吗？此操作不可逆。');
+            if (!confirmed) return;
+            
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`/api/articles/${id}`, {
@@ -274,12 +277,14 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
+                    toast.success('文章已成功删除');
                     loadArticles(currentPage);
                 } else {
-                    alert('删除失败');
+                    toast.error('删除失败，请稍后重试');
                 }
             } catch (err) {
                 console.error(err);
+                toast.error('网络连接错误');
             }
         }
 

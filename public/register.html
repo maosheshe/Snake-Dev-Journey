@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/main.css">
     <!-- Theme Management -->
     <script src="/js/theme.js"></script>
+    <script src="/js/notifications.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .auth-container {
@@ -165,7 +166,10 @@
 
                 const data = await response.json();
                 if (response.ok) {
-                    window.location.href = '/login.html?registered=true';
+                    toast.success('注册成功，正在跳转登录...');
+                    setTimeout(() => {
+                        window.location.href = '/login.html?registered=true';
+                    }, 1500);
                 } else {
                     errorElement.style.display = 'block';
                     errorElement.textContent = data.message || '注册失败，用户名可能已存在';
